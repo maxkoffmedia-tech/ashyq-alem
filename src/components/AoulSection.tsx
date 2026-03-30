@@ -160,7 +160,8 @@ function loadStories(): Story[] {
 
 function loadHearts(): Set<string> {
   try {
-    return new Set(JSON.parse(localStorage.getItem(HEARTS_KEY) || '[]'))
+    const data = localStorage.getItem(HEARTS_KEY)
+    return new Set(data ? JSON.parse(data) : [])
   } catch { return new Set() }
 }
 
@@ -168,8 +169,8 @@ function loadHearts(): Set<string> {
 
 const STORY_TYPES = {
   victory:   { emoji: '🏆', ru: 'Победа',      kz: 'Жеңіс',      color: '#ffd060' },
-  struggle:  { emoji: '🌧',  ru: 'Честно',      kz: 'Шынайы',     color: '#60c5fa' },
-  milestone: { emoji: '✦',  ru: 'Веха',        kz: 'Белес',      color: '#6fcf8e' },
+  struggle:  { emoji: '🌧',  ru: 'Честно',      kz: 'Шынайы',      color: '#60c5fa' },
+  milestone: { emoji: '✦',  ru: 'Веха',        kz: 'Белес',       color: '#6fcf8e' },
   gratitude: { emoji: '🤍',  ru: 'Благодарность', kz: 'Ризашылық', color: '#f4a261' },
 }
 
@@ -403,7 +404,8 @@ export default function AoulSection({ user, locale, onBack }: Props) {
     if (newSet.has(id)) newSet.delete(id)
     else newSet.add(id)
     setHeartedIds(newSet)
-    localStorage.setItem(HEARTS_KEY, JSON.stringify([...newSet]))
+    // ТУТ ИСПРАВЛЕНИЕ: Array.from(newSet) вместо [...newSet] для прохождения билда
+    localStorage.setItem(HEARTS_KEY, JSON.stringify(Array.from(newSet)))
   }
 
   function postStory() {
@@ -839,236 +841,94 @@ export default function AoulSection({ user, locale, onBack }: Props) {
                     'Сіздің тұрақтылығыңыз — бұл да емдеу.',
                   ],
                   color: '#6fcf8e',
-                },
-                {
-                  emoji: '⚠️',
-                  titleRu: 'Чего НЕ делать',
-                  titleKz: 'НЕ істемеу',
-                  pointsRu: [
-                    'Не покрывать и не скрывать последствия.',
-                    'Не давать деньги зная что идёт на зависимость.',
-                    'Не угрожать и не ультиматумы которые вы не выполните.',
-                    'Не обвинять себя — вы не причина зависимости.',
-                  ],
-                  pointsKz: [
-                    'Салдарды жаппаңыз жəне жасырмаңыз.',
-                    'Тəуелділікке кететінін біле тұрып ақша бермеңіз.',
-                    'Орындамайтын қауіп-ультиматум қоймаңыз.',
-                    'Өзіңізді кінəламаңыз — сіз тəуелділіктің себебі емессіз.',
-                  ],
-                  color: '#f87171',
-                },
-                {
-                  emoji: '🌱',
-                  titleRu: 'Ваше восстановление тоже важно',
-                  titleKz: 'Сіздің жазылуыңыз да маңызды',
-                  pointsRu: [
-                    'Вы имеете право на свои чувства — злость, страх, усталость.',
-                    'Группы поддержки для семей (Nar-Anon, Al-Anon) — реально помогают.',
-                    'Забота о себе — не эгоизм, а необходимость.',
-                  ],
-                  pointsKz: [
-                    'Сіздің сезімдеріңізге — ашуға, қорқынышқа, шаршауға — құқығыңыз бар.',
-                    'Отбасыларға арналған қолдау топтары нақты көмектеседі.',
-                    'Өзіңізге қамқорлық — эгоизм емес, қажеттілік.',
-                  ],
-                  color: '#ffd060',
-                },
-              ].map((block, i) => (
+                }
+              ].map((item, i) => (
                 <div key={i} style={{
                   padding: '16px',
                   borderRadius: '18px',
-                  background: `${block.color}08`,
-                  border: `1px solid ${block.color}20`,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                    <span style={{ fontSize: '20px' }}>{block.emoji}</span>
-                    <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: block.color }}>
-                      {isKz ? block.titleKz : block.titleRu}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                    <span style={{ fontSize: '20px' }}>{item.emoji}</span>
+                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: item.color }}>
+                      {isKz ? item.titleKz : item.titleRu}
                     </h4>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                    {(isKz ? block.pointsKz : block.pointsRu).map((point, j) => (
-                      <div key={j} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                        <span style={{ color: block.color, fontSize: '12px', marginTop: '2px', flexShrink: 0 }}>›</span>
-                        <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.70)', lineHeight: 1.55 }}>{point}</span>
-                      </div>
+                  <ul style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {(isKz ? item.pointsKz : item.pointsRu).map((p, pi) => (
+                      <li key={pi} style={{ fontSize: '12px', color: 'rgba(255,255,255,0.50)', lineHeight: 1.5 }}>
+                        {p}
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               ))}
-
-              {/* Встреча для семей */}
-              <div style={{
-                padding: '16px',
-                borderRadius: '18px',
-                background: 'rgba(167,139,250,0.08)',
-                border: '1px solid rgba(167,139,250,0.25)',
-                textAlign: 'center',
-              }}>
-                <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.6 }}>
-                  {isKz
-                    ? '📅 Бейсенбі сайын 20:00 — отбасыларға арналған жиын. Сіз жалғыз емессіз.'
-                    : '📅 Каждый четверг в 20:00 — встреча для семей. Вы не одни.'}
-                </p>
-                <button
-                  onClick={() => window.open('https://zoom.us/j/ashyqalem_family', '_blank')}
-                  style={{
-                    padding: '12px 24px',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(167,139,250,0.40)',
-                    background: 'rgba(167,139,250,0.15)',
-                    color: '#a78bfa',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  {isKz ? 'Жиынға қосылу →' : 'Присоединиться к встрече →'}
-                </button>
-              </div>
             </div>
           )}
 
           {/* ══ ТАБ: SOS ══ */}
           {activeTab === 'sos' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-
-              {/* Кризисный блок */}
               <div style={{
-                padding: '20px',
-                borderRadius: '20px',
+                padding: '16px',
+                borderRadius: '18px',
                 background: 'rgba(248,113,113,0.10)',
-                border: '1px solid rgba(248,113,113,0.35)',
+                border: '1px solid rgba(248,113,113,0.30)',
                 textAlign: 'center',
               }}>
-                <div style={{ fontSize: '36px', marginBottom: '10px' }}>🆘</div>
-                <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 700 }}>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>🆘</div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#f87171', marginBottom: '4px' }}>
                   {isKz ? 'Сен жалғыз емессің' : 'Ты не один'}
-                </h3>
-                <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7 }}>
-                  {isKz
-                    ? 'Дағдарыс — бұл да жолдың бөлігі. Сенің өміріңнің маңызы бар. Дəл қазір қоңырау шал.'
-                    : 'Кризис — это тоже часть пути. Твоя жизнь имеет ценность. Позвони прямо сейчас.'}
-                </p>
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.50)' }}>
+                  {isKz ? 'Көмек сұрау — бұл күш' : 'Просить о помощи — это сила'}
+                </div>
+              </div>
 
-                {/* Быстрые кнопки звонка */}
-                {SOS_CONTACTS.map((contact, i) => (
-                  <div key={i} style={{
-                    padding: '14px 16px',
-                    borderRadius: '16px',
-                    background: `${contact.color}12`,
-                    border: `1px solid ${contact.color}30`,
+              {SOS_CONTACTS.map((c, i) => (
+                <a
+                  key={i}
+                  href={`tel:${c.phone.replace(/[^0-9+]/g, '')}`}
+                  style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
-                    marginBottom: '8px',
-                    textAlign: 'left',
+                    gap: '14px',
+                    padding: '16px',
+                    borderRadius: '18px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <div style={{
+                    width: '40px', height: '40px',
+                    borderRadius: '12px',
+                    background: `${c.color}20`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '18px',
+                    color: c.color,
                   }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: contact.color }}>
-                        {isKz ? contact.nameKz : contact.nameRu}
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.40)', marginTop: '2px' }}>
-                        {isKz ? contact.descKz : contact.descRu}
-                      </div>
-                    </div>
-                    <a
-                      href={`tel:${contact.phone}`}
-                      style={{
-                        padding: '10px 16px',
-                        borderRadius: '14px',
-                        background: contact.color,
-                        color: '#1a0f00',
-                        fontSize: '15px',
-                        fontWeight: 800,
-                        textDecoration: 'none',
-                        flexShrink: 0,
-                        letterSpacing: '0.02em',
-                      }}
-                    >
-                      {contact.phone}
-                    </a>
+                    📞
                   </div>
-                ))}
-              </div>
-
-              {/* Техника 5-4-3-2-1 */}
-              <div style={{
-                padding: '18px',
-                borderRadius: '20px',
-                background: 'rgba(96,197,250,0.07)',
-                border: '1px solid rgba(96,197,250,0.20)',
-              }}>
-                <h4 style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: 700, color: '#60c5fa' }}>
-                  🌊 {isKz ? 'Дəл қазір — 5-4-3-2-1 əдісі' : 'Прямо сейчас — техника 5-4-3-2-1'}
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[
-                    { n: 5, ru: 'вещей которые ты видишь', kz: 'көріп тұрған зат' },
-                    { n: 4, ru: 'вещи которые можешь потрогать', kz: 'ұстай алатын зат' },
-                    { n: 3, ru: 'звука которые слышишь', kz: 'естіп тұрған дыбыс' },
-                    { n: 2, ru: 'запаха которые чувствуешь', kz: 'сезетін иіс' },
-                    { n: 1, ru: 'вкус который ощущаешь', kz: 'сезетін дəм' },
-                  ].map(step => (
-                    <div key={step.n} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{
-                        width: '28px', height: '28px',
-                        borderRadius: '50%',
-                        background: 'rgba(96,197,250,0.15)',
-                        border: '1px solid rgba(96,197,250,0.30)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '13px', fontWeight: 700, color: '#60c5fa',
-                        flexShrink: 0,
-                      }}>
-                        {step.n}
-                      </div>
-                      <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)' }}>
-                        {isKz ? `${step.n} ${step.kz}` : `${step.n} ${step.ru}`}
-                      </span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>
+                      {isKz ? c.nameKz : c.nameRu}
                     </div>
-                  ))}
-                </div>
-                <p style={{
-                  margin: '12px 0 0',
-                  fontSize: '12px',
-                  color: 'rgba(255,255,255,0.35)',
-                  lineHeight: 1.6,
-                }}>
-                  {isKz
-                    ? 'Бұл əдіс миды қазіргі сəтке қайтарады. Дəл қазір тыныс ал.'
-                    : 'Эта техника возвращает мозг в настоящий момент. Дыши прямо сейчас.'}
-                </p>
-              </div>
-
-              {/* Кнопка SOS в аул */}
-              <button
-                onClick={() => {
-                  setActiveTab('stories')
-                  setShowStoryForm(true)
-                  setNewStoryType('struggle')
-                }}
-                style={{
-                  padding: '16px',
-                  borderRadius: '18px',
-                  border: '1px solid rgba(244,162,97,0.35)',
-                  background: 'rgba(244,162,97,0.08)',
-                  color: '#f4a261',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  textAlign: 'center',
-                  lineHeight: 1.6,
-                }}
-              >
-                🏕 {isKz
-                  ? 'Аулға жаз — бірі тыңдайды'
-                  : 'Написать в аул — кто-то услышит'}
-              </button>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
+                      {isKz ? c.descKz : c.descRu}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: c.color }}>
+                    {c.phone}
+                  </div>
+                </a>
+              ))}
             </div>
           )}
+
         </div>
       </div>
     </SectionShell>
