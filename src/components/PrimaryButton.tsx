@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-// ИСПРАВЛЕНО: Правильные пути относительно папки components
 import Shell from "./Shell"; 
-import { Card } from "./Card";
+// ИСПРАВЛЕНО: Убрали фигурные скобки, так как Card скорее всего export default
+import Card from "./Card"; 
 import PrimaryButton from "./PrimaryButton";
-// ИСПРАВЛЕНО: Используем алиас @ для обращения к корню или корректный относительный путь
 import { db, ensureAnonAuth, waitForAuth } from "@/lib/firebase"; 
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 
