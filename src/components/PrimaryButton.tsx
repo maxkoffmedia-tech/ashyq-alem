@@ -2,16 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Shell from "./Shell"; 
-// ИСПРАВЛЕНО: Убрали фигурные скобки, так как Card скорее всего export default
 import Card from "./Card"; 
-import PrimaryButton from "./PrimaryButton";
+// ИСПРАВЛЕНО: Удалил импорт PrimaryButton из самого себя, чтобы не было ошибки зацикливания
 import { db, ensureAnonAuth, waitForAuth } from "@/lib/firebase"; 
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 
 type UserDoc = {
   days?: number;
   points?: number;
-  lastUpdated?: any; // Timestamp
+  lastUpdated?: any; 
   treeLevel?: number;
   name?: string;
 };
@@ -27,7 +26,6 @@ export default function HomePage() {
   const days = data.days || 0;
   const points = data.points || 0;
 
-  // ширина прогресс-бара
   const barWidth = useMemo(() => {
     const p = Math.min(100, Math.round((days / FIRST_AUL) * 100));
     return `${p}%`;
@@ -124,7 +122,13 @@ export default function HomePage() {
             <p className="text-gray-600">Анонимно. Жақсы жол. Поддержка рядом.</p>
           </div>
           <div className="flex gap-2">
-            <PrimaryButton onClick={plusDay}>+1 день здоровья</PrimaryButton>
+            {/* ИСПРАВЛЕНО: Вместо PrimaryButton используем обычную кнопку с теми же стилями, чтобы не было конфликтов */}
+            <button 
+              onClick={plusDay}
+              className="px-6 py-2 bg-kazBlue text-white rounded-full font-bold hover:opacity-90"
+            >
+              +1 день здоровья
+            </button>
             <button onClick={undoDay} className="px-4 py-2 rounded-full border font-semibold hover:bg-gray-50">
               –1 (24ч)
             </button>
