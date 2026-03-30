@@ -1,51 +1,53 @@
 'use client'
 
-import Link from "next/link";
-import { Card } from "@/components/ui/card"; // Убедись, что путь к Card верный
-import { ADDICTIONS } from "@/lib/data";
+import { useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { motion } from 'framer-motion'
+import Link from "next/link"
 
-// 1. Добавляем описание типов для пропсов
-interface AddictionCardProps {
-  name: string;
-  description: string;
-  image: string;
-  link: string;
-}
+export default function AddictionSlugPage() {
+  const params = useParams();
+  
+  // Безопасно получаем slug как строку
+  const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
 
-// 2. Указываем тип в аргументах функции
-function AddictionCard({ name, description, image, link }: AddictionCardProps) {
+  // Формируем ключ для перевода (например, "alcohol" -> "Alcohol")
+  const translationKey = slug 
+    ? slug.charAt(0).toUpperCase() + slug.slice(1) 
+    : 'Default';
+
+  const t = useTranslations(translationKey);
+
   return (
-    <Link href={link} className="block">
-      <Card className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:scale-105">
-        <div className="relative h-48 mb-4 overflow-hidden rounded-md">
-           <img 
-             src={image} 
-             alt={name} 
-             className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-           />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="container mx-auto px-4 py-12"
+    >
+      <div className="max-w-4xl mx-auto">
+        <Link 
+          href="/resources/addictions" 
+          className="text-primary hover:underline mb-8 inline-block"
+        >
+          ← {useTranslations('Common')('back')}
+        </Link>
+
+        <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900 dark:text-white">
+          {t('title')}
+        </h1>
+        
+        <div className="prose prose-lg dark:prose-invert max-w-none">
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+            {t('description')}
+          </p>
+          
+          {/* Здесь можно добавить дополнительный контент из словаря, если он есть */}
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <h2 className="text-2xl font-semibold mb-4">{t('symptoms_title' as any)}</h2>
+            <p>{t('symptoms_text' as any)}</p>
+          </div>
         </div>
-        <h3 className="text-xl font-bold mb-2 text-gray-800">{name}</h3>
-        <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
-      </Card>
-    </Link>
-  );
-}
-
-export default function AddictionsPage() {
-  return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-8 text-center">Виды зависимостей</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {ADDICTIONS.map((item) => (
-          <AddictionCard 
-            key={item.id} 
-            name={item.name} 
-            description={item.description} 
-            image={item.image} 
-            link={item.link} 
-          />
-        ))}
       </div>
-    </div>
-  );
+    </motion.div>
+  )
 }

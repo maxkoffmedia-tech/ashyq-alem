@@ -1,4 +1,3 @@
-// src/app/resources/addictions/page.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -7,34 +6,53 @@ import Link from "next/link";
 import Image from "next/image";
 import { ADDICTIONS } from "@/lib/data";
 
-function AddictionCard({ name, description, image, link }) {
+// ─── ТИПЫ ДАННЫХ ──────────────────────────────────────────────────────────
+interface AddictionCardProps {
+  name: string;
+  description: string;
+  image: string;
+  link: string;
+}
+
+// ─── КОМПОНЕНТ КАРТОЧКИ ──────────────────────────────────────────────────
+function AddictionCard({ name, description, image, link }: AddictionCardProps) {
   return (
     <Link href={link} className="block">
-      <Card className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:scale-105">
-        <CardContent className="flex flex-col items-center text-center">
-          {image && <Image src={image} alt="" width={60} height={60} className="mb-4" />}
+      <Card className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:scale-105 h-full">
+        <CardContent className="flex flex-col items-center text-center p-0">
+          {image && (
+            <div className="relative w-[60px] h-[60px] mb-4">
+              <Image 
+                src={image} 
+                alt={name} 
+                fill
+                className="object-contain" 
+              />
+            </div>
+          )}
           <h3 className="text-xl font-bold text-blue-800 mb-2">{name}</h3>
-          <p className="text-gray-700 text-sm">{description}</p>
+          <p className="text-gray-700 text-sm leading-relaxed">{description}</p>
         </CardContent>
       </Card>
     </Link>
   );
 }
 
+// ─── ОСНОВНАЯ СТРАНИЦА ───────────────────────────────────────────────────
 export default function AddictionsPage() {
   return (
     <div className="container mx-auto p-6 space-y-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
         <Link href="/">
           <Button variant="outline">← Назад на главную</Button>
         </Link>
-        <h1 className="text-4xl font-bold text-center text-blue-900 flex-grow">
+        <h1 className="text-3xl md:text-4xl font-bold text-center text-blue-900 flex-grow">
           Ресурсы для зависимых
         </h1>
-        <div className="w-16"></div>
+        <div className="hidden md:block w-[140px]"></div> {/* Заглушка для центровки заголовка */}
       </div>
 
-      <p className="text-center text-lg text-gray-700">
+      <p className="text-center text-lg text-gray-700 max-w-2xl mx-auto">
         Выберите интересующую вас зависимость, чтобы получить больше информации и поддержки.
       </p>
 
@@ -45,12 +63,13 @@ export default function AddictionsPage() {
             name={addiction.name}
             description={addiction.description}
             image={addiction.image}
-            link={addiction.link} // Ссылка берётся напрямую из данных
+            link={addiction.link}
           />
         ))}
       </div>
-      <footer className="w-full text-center text-gray-500 text-sm mt-8">
-        Ashyq Alem © 2025 · Не является заменой мед. помощи
+
+      <footer className="w-full text-center text-gray-500 text-sm mt-12 pb-6">
+        Ashyq Alem © 2026 · Не является заменой профессиональной медицинской помощи
       </footer>
     </div>
   );
