@@ -1,6 +1,4 @@
 "use client";
-
-import Navbar from "@/components/Navbar";
 import { useState } from "react";
 import { motion } from "framer-motion";
 
@@ -28,7 +26,6 @@ export default function ElderPage() {
       className="min-h-screen bg-cover bg-center text-white"
       style={{ backgroundImage: "url('/images/backgrounds/steppe.jpg')" }}
     >
-      <Navbar />
       <main className="flex flex-col items-center justify-center text-center px-6 py-20">
         <h2 className="text-3xl font-bold mb-6">Ақсақал</h2>
         <motion.div
