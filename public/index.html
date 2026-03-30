@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ashyq Alem</title>
+  <meta name="description" content="Ashyq Alem — қоғамға көмек, тәуелділіктен арылу және денсаулыққа жаңа қадам жасау үшін платформа.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+</head>
+<body class="bg-gradient-to-b from-yellow-50 to-white font-sans text-gray-800">
+
+  <!-- Header -->
+  <header class="bg-yellow-100 shadow-md p-4 flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-yellow-900">🌍 Ashyq Alem</h1>
+    <nav>
+      <ul class="flex gap-4">
+        <li><a href="#" class="hover:text-yellow-700">Басты бет</a></li>
+        <li><a href="#" class="hover:text-yellow-700">Реабилитация</a></li>
+        <li><a href="#" class="hover:text-yellow-700">+1 Күн</a></li>
+        <li><a href="#" class="hover:text-yellow-700">Контакт</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="text-center py-12 px-4">
+    <h2 class="text-4xl font-extrabold text-yellow-800 mb-4">Ashyq Alem — Таза өмірге жол</h2>
+    <p class="text-lg text-gray-700 max-w-2xl mx-auto">
+      Бұл жоба тәуелділіктен арылғысы келетіндерге, денсаулығын жақсартқысы келетіндерге және жаңа өмір бастағысы келетіндерге арналған.  
+      Әрбір <span class="font-semibold text-yellow-700">+1 күн</span> — бұл жеңіс! 🏆
+    </p>
+    <div class="mt-6">
+      <button class="bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-md hover:bg-yellow-600 transition">Бастау</button>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto px-6 py-12">
+    <div class="bg-white shadow-md rounded-xl p-6">
+      <h3 class="text-xl font-bold text-yellow-800 mb-2">📅 Күндер ағашы</h3>
+      <p>Әр күнді белгілеп, өзіңнің таза өмір жолыңды бақыла.</p>
+    </div>
+    <div class="bg-white shadow-md rounded-xl p-6">
+      <h3 class="text-xl font-bold text-yellow-800 mb-2">🏥 Реабилитация орталықтары</h3>
+      <p>Сенімді орталықтар мен көмекшілер туралы ақпарат.</p>
+    </div>
+    <div class="bg-white shadow-md rounded-xl p-6">
+      <h3 class="text-xl font-bold text-yellow-800 mb-2">🎖️ Жүлделер</h3>
+      <p>+1 күндеріңді жинап, марапаттарға ие бол.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-yellow-100 text-center p-4 mt-12">
+    <p class="text-sm text-gray-700">© 2025 Ashyq Alem. Барлық құқықтар қорғалған.</p>
+  </footer>
+
+  <!-- Firebase setup -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAWcCcBzmsF5q5oqO9GVp_MgG7snNPwnjk",
+      authDomain: "ashyq-alem.firebaseapp.com",
+      databaseURL: "https://ashyq-alem-default-rtdb.firebaseio.com",
+      projectId: "ashyq-alem",
+      storageBucket: "ashyq-alem.firebasestorage.app",
+      messagingSenderId: "46155151336",
+      appId: "1:46155151336:web:cb8e496be7f7ded2a4165d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    console.log("Firebase initialized:", app);
+  </script>
+</body>
+</html>

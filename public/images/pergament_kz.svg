@@ -1,0 +1,49 @@
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Фон пергамента -->
+  <defs>
+    <pattern id="parchment" patternUnits="userSpaceOnUse" width="100" height="100">
+      <rect width="100" height="100" fill="#f5e6c8" />
+      <path d="M10,10 Q20,20 30,10 Q40,0 50,10 Q60,20 70,10 Q80,0 90,10" stroke="#d4b88a" stroke-width="0.5" fill="none" />
+    </pattern>
+  </defs>
+
+  <!-- Пергамент -->
+  <rect x="0" y="0" width="600" height="400" fill="url(#parchment)" />
+
+  <!-- Золотая рамка -->
+  <path d="
+    M50,50 
+    H550 
+    V350 
+    H50 
+    Z
+  " fill="none" stroke="#D4AF37" stroke-width="6" />
+
+  <!-- Углы рамки -->
+  <path d="M50,50 Q70,30 90,50" stroke="#D4AF37" stroke-width="6" fill="none" />
+  <path d="M50,50 Q30,70 50,90" stroke="#D4AF37" stroke-width="6" fill="none" />
+  <path d="M550,50 Q530,30 510,50" stroke="#D4AF37" stroke-width="6" fill="none" />
+  <path d="M550,50 Q570,70 550,90" stroke="#D4AF37" stroke-width="6" fill="none" />
+  <path d="M50,350 Q70,370 90,350" stroke="#D4AF37" stroke-width="6" fill="none" />
+  <path d="M50,350 Q30,330 50,310" stroke="#D4AF37" stroke-width="6" fill="none" />
+  <path d="M550,350 Q530,370 510,350" stroke="#D4AF37" stroke-width="6" fill="none" />
+  <path d="M550,350 Q570,330 550,310" stroke="#D4AF37" stroke-width="6" fill="none" />
+
+  <!-- Центральный орнамент -->
+  <path d="M300,200 m-100,0 a100,100 0 1,0 200,0 a100,100 0 1,0 -200,0" stroke="#D4AF37" stroke-width="2" fill="none" />
+  <path d="M300,200 L300,100 M300,200 L300,300 M300,200 L200,200 M300,200 L400,200" stroke="#D4AF37" stroke-width="2" fill="none" />
+
+  <!-- Текст -->
+  <text x="300" y="180" text-anchor="middle" font-family="Playfair Display" font-size="24" fill="white" stroke="black" stroke-width="0.5">
+    Ashyq Alem — Ұлы Дала жолы
+  </text>
+  <text x="300" y="220" text-anchor="middle" font-family="Playfair Display" font-size="16" fill="white" stroke="black" stroke-width="0.5">
+    Ashyq Alem-ге қош келдіңіз —
+  </text>
+  <text x="300" y="240" text-anchor="middle" font-family="Playfair Display" font-size="16" fill="white" stroke="black" stroke-width="0.5">
+    трезвость, дәстүр мен рух күші
+  </text>
+  <text x="300" y="260" text-anchor="middle" font-family="Playfair Display" font-size="16" fill="white" stroke="black" stroke-width="0.5">
+    тоғысқан кеңістік.
+  </text>
+</svg>

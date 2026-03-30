@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ashyq Alem — Ұлы Дала жолы</title>
+<meta name="description" content="Ashyq Alem — платформа поддержки: зависимые, близкие, молодёжь, verified центры, +1 к здоровью, анонимный чат и SOS." />
+<link href="styles.css" rel="stylesheet" />
+</head>
+<body>
+<header class="topbar">
+<div class="brand"><div class="logo">🛖</div>
+<div><div class="title">Ashyq Alem</div><div class="subtitle">Ұлы Дала жолы · Открытый Мир</div></div>
+</div>
+<div class="top-actions">
+<select id="langSel"><option value="ru">Русский</option><option value="kz">Қазақша</option></select>
+<button id="loginBtn" class="ghost">Анонимный вход</button>
+</div>
+</header>
+
+<nav class="tabs">
+<button data-tab="home" class="tab active">Главная</button>
+<button data-tab="dependents" class="tab">Зависимым</button>
+<button data-tab="family" class="tab">Близким</button>
+<button data-tab="youth" class="tab">Молодёжь</button>
+<button data-tab="centers" class="tab">Центры</button>
+<button data-tab="chat" class="tab">Чат</button>
+<button data-tab="sos" class="tab danger">SOS</button>
+</nav>
+
+<main>
+<section id="home" class="panel active">
+<div class="grid">
+<div class="card">
+<h3>+1 к здоровью</h3>
+<p class="muted">Каждый клик — шаг по твоему «Жол» (пути). Анонимно.</p>
+<div class="progress">
+<div class="stats">
+<div>Дней: <b id="days">0</b></div>
+<div>Баллы: <b id="points">0</b></div>
+<div>Экономия: <b id="money">0</b> ₸</div>
+<div>Награда: <span id="badge" class="badge">Жас қыран</span></div>
+</div>
+<div class="bar"><div id="barFill"></div></div>
+</div>
+<div class="actions">
+<button id="plusDay">+1 к здоровью</button>
+<button id="undoDay" class="ghost">Отменить (24ч)</button>
+<button id="shareBtn" class="ghost">Поделиться</button>
+</div>
+<div class="map">
+<div id="marker" class="marker"></div>
+<div id="yurta" class="yurta" title="Киіз үй">🛖</div>
+<div id="tree" class="tree" title="Дерево прогресса">🌳</div>
+</div>
+<p id="quote" class="quote"></p>
+</div>
+
+<div class="card">
+<h3>AI-наставник (демо)</h3>
+<p class="muted">Эмпатичный «Аға/Апай». (Пока локально — без внешних ключей)</p>
+<div class="ai">
+<textarea id="aiInput" placeholder="Напиши, что чувствуешь..."></textarea>
+<button id="askAi">Спросить AI</button>
+</div>
+<div id="aiOut" class="ai-out"></div>
+</div>
+</div>
+</section>
+
+<section id="dependents" class="panel"><div class="card"><h3>Путь восстановления (12 шагов)</h3><ol id="twelveSteps"></ol></div></section>
+<section id="family" class="panel"><div class="card"><h3>Чат для близких</h3><div id="familyChat" class="chatbox"></div><div class="chatbar"><input id="familyInput" /><button id="familySend">OK</button></div></div></section>
+<section id="youth" class="panel"><div class="card"><h3>Мифы и реальность</h3><ul id="youthMyths" class="list"></ul></div></section>
+<section id="centers" class="panel"><div class="card"><h3>Верифицированные центры</h3><ul id="centersList" class="list"></ul></div></section>
+<section id="chat" class="panel"><div class="card"><h3>Анонимный чат</h3><div id="publicChat" class="chatbox"></div><div class="chatbar"><input id="chatInput" /><button id="chatSend">OK</button></div></div></section>
+<section id="sos" class="panel"><div class="card"><h3>SOS</h3><textarea id="sosText"></textarea><div class="actions"><button id="sosSend" class="danger">Отправить SOS</button></div></div></section>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyAWcCcBzmsF5q5oqO9GVp_MgG7snNPwnjk",
+authDomain: "ashyq-alem.firebaseapp.com",
+databaseURL: "https://ashyq-alem-default-rtdb.firebaseio.com",
+projectId: "ashyq-alem",
+storageBucket: "ashyq-alem.firebasestorage.app",
+messagingSenderId: "46155151336",
+appId: "1:46155151336:web:cb8e496be7f7ded2a4165d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const userId = "userId123";
+
+const daysElement = document.getElementById('days');
+const pointsElement = document.getElementById('points');
+const addDayBtn = document.getElementById('plusDay');
+
+const updateCounters = async () => {
+const userRef = doc(db, 'users', userId);
+const userSnap = await getDoc(userRef);
+
+if (userSnap.exists()) {
+const userData = userSnap.data();
+daysElement.textContent = userData.stats.daysSober;
+pointsElement.textContent = userData.stats.points;
+} else {
+console.log("Документ пользователя не найден!");
+}
+};
+
+const handleAddDay = async () => {
+const userRef = doc(db, 'users', userId);
+await updateDoc(userRef, {
+'stats.daysSober': increment(1),
+'stats.points': increment(10)
+});
+console.log("Данные успешно обновлены!");
+await updateCounters();
+};
+
+addDayBtn.addEventListener('click', handleAddDay);
+updateCounters();
+</script>
+</body>
+</html>

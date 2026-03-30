@@ -1,0 +1,33 @@
+{
+  "name": "ashyqalem_web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.23.22",
+    "i18next": "^25.5.3",
+    "lucide-react": "^0.544.0",
+    "next": "14.2.4",
+    "next-intl": "^3.26.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-i18next": "^16.0.0",
+    "tailwind-merge": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.2",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.10",
+    "typescript": "5.4.5"
+  }
+}

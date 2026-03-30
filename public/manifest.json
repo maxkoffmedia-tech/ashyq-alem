@@ -1,0 +1,21 @@
+{
+  "name": "Ashyq Alem",
+  "short_name": "Ashyq Alem",
+  "description": "Платформа для профилактики зависимостей с казахским культурным контекстом",
+  "start_url": "/ru",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#1e40af",
+  "icons": [
+    {
+      "src": "/images/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
