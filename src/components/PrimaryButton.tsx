@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Shell from "../src/components/Shell";
-import { Card } from "../src/components/Card";
-import PrimaryButton from "../src/components/PrimaryButton";
-import { db, ensureAnonAuth, waitForAuth } from "../src/lib/firebase";
+// ИСПРАВЛЕНО: Правильные пути относительно папки components
+import Shell from "./Shell"; 
+import { Card } from "./Card";
+import PrimaryButton from "./PrimaryButton";
+// ИСПРАВЛЕНО: Используем алиас @ для обращения к корню или корректный относительный путь
+import { db, ensureAnonAuth, waitForAuth } from "@/lib/firebase"; 
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 
 type UserDoc = {
@@ -158,12 +160,10 @@ export default function HomePage() {
           <Card>
             <div className="bg-white/60 rounded-xl p-3">
               <div className="h-40 rounded-xl bg-[url('https://i.imgur.com/e7Q4F6n.png')] bg-cover bg-center relative overflow-hidden">
-                {/* Простая «метка пути»: сдвиг в процентах по первым 30 дням */}
                 <div
                   className="absolute bottom-[18%] w-4 h-4 bg-red-500 rounded-full shadow-[0_0_10px_rgba(255,71,87,.8)] transition-all"
                   style={{ left: `${6 + Math.min(1, days / 30) * 72}%` }}
                 />
-                {/* Юрта появляется с 7-го дня */}
                 {days >= 7 && (
                   <img
                     src="https://i.imgur.com/1G6f2S9.png"
@@ -178,7 +178,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Заглушки будущих разделов: */}
       <div className="grid md:grid-cols-3 gap-4 mt-6">
         <Card>
           <h3 className="text-lg font-bold">Для зависимых</h3>
