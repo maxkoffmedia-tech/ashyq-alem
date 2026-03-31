@@ -6,54 +6,72 @@ export default function WorldLayer() {
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    // ВОТ ЭТА ПРОВЕРКА СПАСЕТ БИЛД:
+    if (!canvas) return 
+
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    let particles: any[] = []
-    const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
+    // Теперь TS знает, что canvas существует
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
 
     class Particle {
-      x = Math.random() * canvas.width
-      y = canvas.height + Math.random() * 100
+      // Используем canvas.width только если canvas точно есть
+      x = Math.random() * (canvas?.width || 0)
+      y = (canvas?.height || 0) + Math.random() * 100
       size = Math.random() * 2 + 0.5
       speed = Math.random() * 0.5 + 0.2
-      opacity = Math.random() * 0.5 + 0.2
+      opacity = Math.random() * 0.5 + 0.1
 
       update() {
         this.y -= this.speed
-        if (this.y < -10) this.y = canvas.height + 10
+        if (this.y < -10) {
+          this.y = (canvas?.height || 0) + 10
+          this.x = Math.random() * (canvas?.width || 0)
+        }
       }
 
       draw() {
         if (!ctx) return
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`
         ctx.beginPath()
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(255, 232, 160, ${this.opacity})`
         ctx.fill()
       }
     }
 
-    const init = () => {
-      particles = []
-      for (let i = 0; i < 100; i++) particles.push(new Particle())
+    const particles: Particle[] = []
+    for (let i = 0; i < 50; i++) {
+      particles.push(new Particle())
     }
 
-    const animate = () => {
+    function animate() {
+      if (!ctx || !canvas) return
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      particles.forEach(p => { p.update(); p.draw() })
+      particles.forEach(p => {
+        p.update()
+        p.draw()
+      })
       requestAnimationFrame(animate)
     }
 
-    window.addEventListener('resize', resize)
-    resize()
-    init()
     animate()
-    return () => window.removeEventListener('resize', resize)
+
+    const handleResize = () => {
+      if (!canvas) return
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  return <canvas ref={canvasRef} className="fixed inset-0 z-[-10] pointer-events-none" />
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none z-0 opacity-50"
+    />
+  )
 }
