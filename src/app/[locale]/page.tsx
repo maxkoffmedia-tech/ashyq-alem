@@ -18,10 +18,7 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
   const { user } = useAuth()
   const isAuth = Boolean(user)
   
-  // Явно приводим locale к нужному типу для компонентов
   const currentLocale = locale as "ru" | "kz"
-
-  // Используем (user as any), чтобы избежать ошибки со startDate
   const { days } = useDayCounter((user as any)?.startDate || '') 
   
   const [activeSection, setActiveSection] = useState<string | null>(null)
@@ -37,7 +34,6 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
       
       <DynamicBackground />
 
-      {/* ШАПКА */}
       <div className="flex flex-col items-center text-center space-y-4 z-10 mt-4">
         <h1 className="text-2xl md:text-4xl font-black text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] tracking-tighter uppercase">
           {t.title}
@@ -52,7 +48,6 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
         </div>
       </div>
 
-      {/* ЦЕНТР */}
       <div className="flex-1 flex flex-col items-center justify-center w-full relative z-10">
         {isAuth && (
           <div className="mb-8 z-20 scale-110">
@@ -74,15 +69,21 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
         )}
       </div>
 
-      {/* ПОДВАЛ */}
       <div className="z-10 pb-4">
         <p className="text-[10px] md:text-xs text-white/40 tracking-[0.2em] uppercase text-center">
           {t.disclaimer}
         </p>
       </div>
 
-      {/* МОДАЛКИ С ПРИНУДИТЕЛЬНЫМ ТИПОМ LOCALE */}
-      {activeSection === 'auth' && <AuthModal locale={currentLocale} onClose={() => setActiveSection(null)} />}
+      {/* МОДАЛКИ */}
+      {activeSection === 'auth' && (
+        <AuthModal 
+          locale={currentLocale} 
+          onClose={() => setActiveSection(null)} 
+          onRegister={() => setActiveSection(null)} // Добавили обязательный пропс
+        />
+      )}
+      
       {activeSection === 'map' && <MapSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
       {activeSection === 'path' && <PathSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
       {activeSection === 'tree' && <TreeSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
