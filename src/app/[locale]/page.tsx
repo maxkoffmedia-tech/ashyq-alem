@@ -1,4 +1,3 @@
-{t.title} - TEST VERSION
 'use client'
 import { useState, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -37,7 +36,7 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
 
       <div className="flex flex-col items-center text-center space-y-4 z-10 mt-4">
         <h1 className="text-2xl md:text-4xl font-black text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] tracking-tighter uppercase text-center">
-          {t.title}
+  {t.title} — ТЕСТ СВЯЗИ
         </h1>
         <p className="text-[14px] md:text-lg text-white/80 font-medium italic max-w-[300px] md:max-w-xl text-center">
           {t.subtitle}
