@@ -15,11 +15,12 @@ import TrialSection from '@/components/TrialSection'
 import DynamicBackground from '@/components/DynamicBackground'
 
 export default function LocalePage({ params: { locale } }: { params: { locale: string } }) {
-  // Достаем только user, так как типизация хука требует именно его
   const { user } = useAuth()
   const isAuth = Boolean(user)
 
-  const { days } = useDayCounter()
+  // Исправлено: передаем дату из юзера в хук, либо пустую строку, чтобы не было ошибки типа
+  const { days } = useDayCounter(user?.startDate || '') 
+  
   const [activeSection, setActiveSection] = useState<string | null>(null)
   
   const t = translations[locale as keyof typeof translations] || translations.ru
@@ -69,7 +70,7 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
       </div>
 
       <div className="z-10 pb-4">
-        <p className="text-[10px] md:text-xs text-white/40 tracking-[0.2em] uppercase">
+        <p className="text-[10px] md:text-xs text-white/40 tracking-[0.2em] uppercase text-center">
           {t.disclaimer}
         </p>
       </div>
