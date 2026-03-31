@@ -15,9 +15,9 @@ import TrialSection from '@/components/TrialSection'
 import DynamicBackground from '@/components/DynamicBackground'
 
 export default function LocalePage({ params: { locale } }: { params: { locale: string } }) {
-  // Исправлено: забираем user, так как isAuthenticated нет в типах хука
+  // Достаем только user, так как типизация хука требует именно его
   const { user } = useAuth()
-  const isAuth = !!user 
+  const isAuth = Boolean(user)
 
   const { days } = useDayCounter()
   const [activeSection, setActiveSection] = useState<string | null>(null)
@@ -33,7 +33,6 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
       
       <DynamicBackground />
 
-      {/* ШАПКА */}
       <div className="flex flex-col items-center text-center space-y-4 z-10 mt-4">
         <h1 className="text-2xl md:text-4xl font-black text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] tracking-tighter uppercase">
           {t.title}
@@ -48,7 +47,6 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
         </div>
       </div>
 
-      {/* ЦЕНТР */}
       <div className="flex-1 flex flex-col items-center justify-center w-full relative z-10">
         {isAuth && (
           <div className="mb-8 z-20 scale-110">
@@ -65,19 +63,17 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
             onClick={() => setActiveSection('auth')}
             className="mt-8 px-12 py-4 bg-amber-600/30 hover:bg-amber-600/50 backdrop-blur-2xl border-2 border-amber-400/40 text-amber-50 rounded-full font-bold uppercase tracking-widest transition-all active:scale-95 shadow-[0_0_30px_rgba(251,191,36,0.2)]"
           >
-            {t.startPath}
+            {t.startPath || 'Начать путь'}
           </button>
         )}
       </div>
 
-      {/* ПОДВАЛ */}
       <div className="z-10 pb-4">
         <p className="text-[10px] md:text-xs text-white/40 tracking-[0.2em] uppercase">
           {t.disclaimer}
         </p>
       </div>
 
-      {/* МОДАЛЬНЫЕ ОКНА */}
       {activeSection === 'auth' && <AuthModal locale={locale} onClose={() => setActiveSection(null)} />}
       {activeSection === 'map' && <MapSection locale={locale} onClose={() => setActiveSection(null)} />}
       {activeSection === 'path' && <PathSection locale={locale} onClose={() => setActiveSection(null)} />}
