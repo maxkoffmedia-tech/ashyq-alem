@@ -17,14 +17,16 @@ import DynamicBackground from '@/components/DynamicBackground'
 export default function LocalePage({ params: { locale } }: { params: { locale: string } }) {
   const { user } = useAuth()
   const isAuth = Boolean(user)
+  
+  // Явно приводим locale к нужному типу для компонентов
+  const currentLocale = locale as "ru" | "kz"
 
-  // Используем (user as any), чтобы TypeScript не ругался на отсутствие startDate в интерфейсе
-  // Это позволит нам собрать проект прямо сейчас.
+  // Используем (user as any), чтобы избежать ошибки со startDate
   const { days } = useDayCounter((user as any)?.startDate || '') 
   
   const [activeSection, setActiveSection] = useState<string | null>(null)
   
-  const t = translations[locale as keyof typeof translations] || translations.ru
+  const t = translations[currentLocale] || translations.ru
   
   const randomQuote = useMemo(() => {
     return t.quotes[Math.floor(Math.random() * t.quotes.length)]
@@ -40,7 +42,7 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
         <h1 className="text-2xl md:text-4xl font-black text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] tracking-tighter uppercase">
           {t.title}
         </h1>
-        <p className="text-[14px] md:text-lg text-white/80 font-medium italic max-w-[300px] md:max-w-xl">
+        <p className="text-[14px] md:text-lg text-white/80 font-medium italic max-w-[300px] md:max-w-xl text-balance">
           {t.subtitle}
         </p>
         <div className="px-6 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
@@ -54,12 +56,12 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
       <div className="flex-1 flex flex-col items-center justify-center w-full relative z-10">
         {isAuth && (
           <div className="mb-8 z-20 scale-110">
-            <DayCounter locale={locale} />
+            <DayCounter locale={currentLocale} />
           </div>
         )}
 
         <div className="relative transform scale-[0.85] md:scale-100 transition-all duration-700">
-          <IconCircle locale={locale} onSectionClick={setActiveSection} />
+          <IconCircle locale={currentLocale} onSectionClick={setActiveSection} />
         </div>
 
         {!isAuth && (
@@ -79,14 +81,14 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
         </p>
       </div>
 
-      {/* МОДАЛКИ */}
-      {activeSection === 'auth' && <AuthModal locale={locale} onClose={() => setActiveSection(null)} />}
-      {activeSection === 'map' && <MapSection locale={locale} onClose={() => setActiveSection(null)} />}
-      {activeSection === 'path' && <PathSection locale={locale} onClose={() => setActiveSection(null)} />}
-      {activeSection === 'tree' && <TreeSection locale={locale} onClose={() => setActiveSection(null)} />}
-      {activeSection === 'mentor' && <AksakalSection locale={locale} onClose={() => setActiveSection(null)} />}
-      {activeSection === 'community' && <AoulSection locale={locale} onClose={() => setActiveSection(null)} />}
-      {activeSection === 'trials' && <TrialSection locale={locale} onClose={() => setActiveSection(null)} />}
+      {/* МОДАЛКИ С ПРИНУДИТЕЛЬНЫМ ТИПОМ LOCALE */}
+      {activeSection === 'auth' && <AuthModal locale={currentLocale} onClose={() => setActiveSection(null)} />}
+      {activeSection === 'map' && <MapSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
+      {activeSection === 'path' && <PathSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
+      {activeSection === 'tree' && <TreeSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
+      {activeSection === 'mentor' && <AksakalSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
+      {activeSection === 'community' && <AoulSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
+      {activeSection === 'trials' && <TrialSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
     </main>
   )
 }
