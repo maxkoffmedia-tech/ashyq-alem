@@ -1,142 +1,41 @@
 'use client'
+import { useDayCounter } from '@/hooks/useDayCounter'
+import { translations } from '@/i18n/translations'
 
-import { useDayCounter, MILESTONES } from '@/hooks/useDayCounter'
-import type { UserProfile } from '@/hooks/useAuth'
-
-interface Props {
-  user: UserProfile
-  locale: 'ru' | 'kz'
-  onResetPath: () => void
-}
-
-export default function DayCounter({ user, locale, onResetPath }: Props) {
-  const { days, hours, minutes, milestone, nextMilestone, progressToNext } =
-    useDayCounter(user.createdAt)
-
-  const isKz = locale === 'kz'
-  const glowColor = milestone?.color ?? '#ffd060'
-
-  const dayWord = isKz
-    ? 'күн'
-    : days === 1 ? 'день'
-    : days < 5  ? 'дня'
-    : 'дней'
+export default function DayCounter({ locale }: { locale: string }) {
+  const { days, milestone, progressToNext } = useDayCounter()
+  const t = translations[locale as keyof typeof translations] || translations.ru
 
   return (
-    <div
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '10px 20px',
-        borderRadius: '32px',
-        background: 'rgba(5,15,5,0.55)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: `1px solid ${glowColor}40`,
-        boxShadow: `0 0 24px ${glowColor}20`,
-        color: 'white',
-        position: 'relative',
-        overflow: 'hidden',
-        maxWidth: '100%',
-      }}
-    >
-      {/* Фоновое свечение */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: `radial-gradient(ellipse at 50% 0%, ${glowColor}14 0%, transparent 70%)`,
-      }} />
-
-      {/* Артефакт */}
-      <span style={{ fontSize: '22px', flexShrink: 0, zIndex: 1 }}>
-        {milestone?.artifact ?? '🌱'}
-      </span>
-
-      {/* Число дней */}
-      <div style={{ zIndex: 1, lineHeight: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-          <span style={{
-            fontSize: 'clamp(1.8rem, 5vw, 2.8rem)',
-            fontWeight: 800,
-            color: glowColor,
-            textShadow: `0 0 20px ${glowColor}80`,
-            fontVariantNumeric: 'tabular-nums',
-          }}>
-            {days}
-          </span>
-          <span style={{
-            fontSize: '12px',
-            color: 'rgba(255,255,255,0.50)',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-          }}>
-            {isKz ? 'жол ' : 'день пути · '}{dayWord}
-          </span>
-        </div>
-
-        {/* Часы/минуты + прогресс */}
-        <div style={{ marginTop: '5px' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            fontSize: '10px',
-            color: 'rgba(255,255,255,0.30)',
-            marginBottom: '4px',
-            gap: '8px',
-          }}>
-            <span>{String(hours).padStart(2,'0')}ч {String(minutes).padStart(2,'0')}м</span>
-            <span>
-              {nextMilestone.artifact} {isKz ? nextMilestone.labelKz : nextMilestone.labelRu} — {nextMilestone.days - days} {isKz ? 'күн' : 'дн.'}
+    <div className="flex flex-col items-center space-y-2">
+      <div className="flex items-center space-x-4 bg-black/30 backdrop-blur-xl border border-white/10 p-2 pl-4 rounded-full shadow-2xl">
+        <div className="flex items-center space-x-2">
+          <span className="text-2xl animate-pulse" title={milestone.name}>{milestone.icon}</span>
+          <div className="flex flex-col leading-none">
+            <span className={`text-2xl font-black text-transparent bg-clip-text bg-gradient-to-b ${milestone.color}`}>
+              {days}
+            </span>
+            <span className="text-[10px] text-white/50 uppercase tracking-tighter">
+              {t.dayOfPath}
             </span>
           </div>
-          {/* Прогресс-бар */}
-          <div style={{
-            height: '2px', borderRadius: '1px',
-            background: 'rgba(255,255,255,0.08)',
-          }}>
-            <div style={{
-              height: '100%',
-              width: `${progressToNext * 100}%`,
-              background: `linear-gradient(90deg, ${glowColor}60, ${glowColor})`,
-              borderRadius: '1px',
-              transition: 'width 1s ease',
-            }} />
+        </div>
+        
+        <div className="h-8 w-px bg-white/10" />
+        
+        <div className="flex flex-col w-24">
+          <div className="flex justify-between text-[9px] text-white/40 mb-1 uppercase">
+            <span>Next</span>
+            <span>{Math.round(progressToNext)}%</span>
+          </div>
+          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+            <div 
+              className={`h-full transition-all duration-1000 bg-gradient-to-r ${milestone.color}`}
+              style={{ width: `${progressToNext}%` }}
+            />
           </div>
         </div>
       </div>
-
-      {/* Кнопка сброса */}
-      <button
-        onClick={() => {
-          if (window.confirm(isKz
-            ? 'Жаңа бастау нүктесі? Жол жалғасады.'
-            : 'Новая точка? Путь продолжается.'
-          )) onResetPath()
-        }}
-        style={{
-          zIndex: 1, flexShrink: 0,
-          background: 'rgba(255,255,255,0.06)',
-          border: '1px solid rgba(255,255,255,0.10)',
-          borderRadius: '12px',
-          padding: '5px 9px',
-          color: 'rgba(255,255,255,0.35)',
-          fontSize: '11px',
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-          fontFamily: 'inherit',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.color = 'rgba(255,255,255,0.7)'
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.color = 'rgba(255,255,255,0.35)'
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'
-        }}
-        title={isKz ? 'Жаңа бастау' : 'Новая точка'}
-      >
-        ↩
-      </button>
     </div>
   )
 }

@@ -1,77 +1,40 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 
-type TimeOfDay = 'morning' | 'day' | 'night'
-
-const BG_MAP: Record<TimeOfDay, string> = {
-  morning: '/images/backgrounds/world_main.png',
-  day:     '/images/backgrounds/world_main1.png',
-  night:   '/images/backgrounds/world_main2.png',
-}
-
-function getTimeOfDay(): TimeOfDay {
-  const h = new Date().getHours()
-  if (h >= 5 && h < 10)  return 'morning'
-  if (h >= 10 && h < 20) return 'day'
-  return 'night'
-}
-
 export default function DynamicBackground() {
-  const [bg, setBg] = useState(BG_MAP['day']) // SSR-safe дефолт
+  // По умолчанию ставим главный фон
+  const [bg, setBg] = useState('/world_main.png')
 
   useEffect(() => {
-    setBg(BG_MAP[getTimeOfDay()])
+    const updateBackground = () => {
+      const hour = new Date().getHours()
+      
+      // Логика смены твоих .png файлов по времени суток
+      if (hour >= 5 && hour < 17) {
+        setBg('/world_main.png')   // День (светлый с лучами)
+      } else if (hour >= 17 && hour < 21) {
+        setBg('/world_main1.png')  // Вечер (туманный с грибами)
+      } else {
+        setBg('/world_main2.png')  // Ночь (синий лунный)
+      }
+    }
+
+    updateBackground()
+    // Проверяем время каждую минуту, чтобы фон сменился плавно
+    const timer = setInterval(updateBackground, 60000)
+    return () => clearInterval(timer)
   }, [])
 
   return (
-    <>
-      {/* Основной фон */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: -20,
-          backgroundImage: `url(${bg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center center',
-          backgroundRepeat: 'no-repeat',
-          // Принудительно покрываем весь экран включая notch
-          width: '100%',
-          height: '100%',
-          // Убираем дёргание при смене
-          transition: 'background-image 0.8s ease',
-        }}
+    <div className="fixed inset-0 z-[-20] w-full h-full bg-black overflow-hidden">
+      <img 
+        key={bg}
+        src={bg} 
+        className="w-full h-full object-cover object-center transition-opacity duration-1000 ease-in-out"
+        alt="Ұлы Дала Жолы Background"
       />
-      {/* Градиент снизу — footer всегда читается */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '120px',
-          zIndex: -15,
-          background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)',
-          pointerEvents: 'none',
-        }}
-      />
-      {/* Градиент сверху — header читается */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '100px',
-          zIndex: -15,
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.40) 0%, transparent 100%)',
-          pointerEvents: 'none',
-        }}
-      />
-    </>
+      {/* Слой затемнения для читаемости интерфейса */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
+    </div>
   )
 }
