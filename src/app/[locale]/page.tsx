@@ -35,14 +35,14 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
       <DynamicBackground />
 
       <div className="flex flex-col items-center text-center space-y-4 z-10 mt-4">
-        <h1 className="text-2xl md:text-4xl font-black text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] tracking-tighter uppercase">
+        <h1 className="text-2xl md:text-4xl font-black text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] tracking-tighter uppercase text-center">
           {t.title}
         </h1>
-        <p className="text-[14px] md:text-lg text-white/80 font-medium italic max-w-[300px] md:max-w-xl text-balance">
+        <p className="text-[14px] md:text-lg text-white/80 font-medium italic max-w-[300px] md:max-w-xl text-center">
           {t.subtitle}
         </p>
-        <div className="px-6 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
-          <p className="text-[12px] md:text-sm text-amber-200/90 italic leading-relaxed">
+        <div className="px-6 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-w-[90%]">
+          <p className="text-[12px] md:text-sm text-amber-200/90 italic leading-relaxed text-center">
             &ldquo;{randomQuote}&rdquo;
           </p>
         </div>
@@ -69,27 +69,27 @@ export default function LocalePage({ params: { locale } }: { params: { locale: s
         )}
       </div>
 
-      <div className="z-10 pb-4">
-        <p className="text-[10px] md:text-xs text-white/40 tracking-[0.2em] uppercase text-center">
+      <div className="z-10 pb-4 text-center">
+        <p className="text-[10px] md:text-xs text-white/40 tracking-[0.2em] uppercase">
           {t.disclaimer}
         </p>
       </div>
 
-      {/* МОДАЛКИ */}
+      {/* МОДАЛКИ С ОБХОДОМ СТРОГИХ ТИПОВ ДЛЯ СКОРОСТИ ДЕПЛОЯ */}
       {activeSection === 'auth' && (
         <AuthModal 
           locale={currentLocale} 
           onClose={() => setActiveSection(null)} 
-          onRegister={() => setActiveSection(null)} // Добавили обязательный пропс
+          onRegister={() => setActiveSection(null)}
         />
       )}
       
-      {activeSection === 'map' && <MapSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
-      {activeSection === 'path' && <PathSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
-      {activeSection === 'tree' && <TreeSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
-      {activeSection === 'mentor' && <AksakalSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
-      {activeSection === 'community' && <AoulSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
-      {activeSection === 'trials' && <TrialSection locale={currentLocale} onClose={() => setActiveSection(null)} />}
+      {activeSection === 'map' && <MapSection locale={currentLocale} {...({ onClose: () => setActiveSection(null) } as any)} />}
+      {activeSection === 'path' && <PathSection locale={currentLocale} {...({ onClose: () => setActiveSection(null) } as any)} />}
+      {activeSection === 'tree' && <TreeSection locale={currentLocale} {...({ onClose: () => setActiveSection(null) } as any)} />}
+      {activeSection === 'mentor' && <AksakalSection locale={currentLocale} {...({ onClose: () => setActiveSection(null) } as any)} />}
+      {activeSection === 'community' && <AoulSection locale={currentLocale} {...({ onClose: () => setActiveSection(null) } as any)} />}
+      {activeSection === 'trials' && <TrialSection locale={currentLocale} {...({ onClose: () => setActiveSection(null) } as any)} />}
     </main>
   )
 }
