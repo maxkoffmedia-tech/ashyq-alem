@@ -67,7 +67,7 @@ export default function AoulSection({ user, locale, onBack }: Props) {
       setStories(prev => prev.map(s => s.id === id ? { ...s, hearts: s.hearts + 1 } : s))
     }
     setHeartedIds(next)
-    localStorage.setItem(HEARTS_KEY, JSON.stringify([...next]))
+    localStorage.setItem(HEARTS_KEY, JSON.stringify(Array.from(next)))
   }
 
   function submitStory() {
