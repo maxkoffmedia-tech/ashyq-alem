@@ -1,935 +1,328 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import SectionShell from '@/components/SectionShell'
 import type { UserProfile } from '@/hooks/useAuth'
-import type { Locale } from '@/i18n/translations'
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ЦИФРОВОЙ АУЛ — архитектура
-//
-// MVP (сейчас, без бэкенда):
-//   ✅ Три круга — визуальная архитектура аула
-//   ✅ Расписание встреч с реальными ссылками
-//   ✅ Анонимные истории (localStorage, публикуются локально)
-//   ✅ Полный гид для семей
-//   ✅ SOS кнопка с контактами КЗ
-//   ✅ Тематические юрты (категории по типу)
-//
-// Следующий этап (с бэкендом):
-//   🔜 Реальный чат между пользователями (WebSocket)
-//   🔜 Видео-сборы внутри приложения
-//   🔜 Push-уведомления на SOS
-//   🔜 Верификация анонимных историй
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface Props {
-  user: UserProfile
-  locale: Locale
-  onBack: () => void
-}
-
-type Tab = 'aoul' | 'stories' | 'family' | 'sos'
-
-// ─── Данные встреч ────────────────────────────────────────────────────────────
-
-interface Meeting {
-  id: string
-  dayRu: string
-  dayKz: string
-  time: string
-  titleRu: string
-  titleKz: string
-  descRu: string
-  descKz: string
-  type: 'general' | 'family' | 'women' | 'men' | 'youth'
-  zoomLink: string  // реальная ссылка когда появится
-  color: string
-}
-
-const MEETINGS: Meeting[] = [
-  {
-    id: 'm1',
-    dayRu: 'Понедельник', dayKz: 'Дүйсенбі',
-    time: '19:00',
-    titleRu: 'Вечерний костёр', titleKz: 'Кешкі от',
-    descRu: 'Общий сбор аула. Делимся как прошёл день.',
-    descKz: 'Ауылдың жалпы жиыны. Күн қалай өткенін бөлісеміз.',
-    type: 'general', color: '#ffd060',
-    zoomLink: 'https://zoom.us/j/ashyqalem_monday',
-  },
-  {
-    id: 'm2',
-    dayRu: 'Среда', dayKz: 'Сәрсенбі',
-    time: '18:00',
-    titleRu: 'Юрта женщин', titleKz: 'Əйелдер киіз үйі',
-    descRu: 'Безопасное пространство для женщин на пути.',
-    descKz: 'Жолдағы əйелдерге қауіпсіз кеңістік.',
-    type: 'women', color: '#f4a261',
-    zoomLink: 'https://zoom.us/j/ashyqalem_women',
-  },
-  {
-    id: 'm3',
-    dayRu: 'Четверг', dayKz: 'Бейсенбі',
-    time: '20:00',
-    titleRu: 'Круг семей', titleKz: 'Отбасы шеңбері',
-    descRu: 'Только для близких зависимых. Без осуждения.',
-    descKz: 'Тек тәуелдінің жақындары үшін. Соттамай.',
-    type: 'family', color: '#a78bfa',
-    zoomLink: 'https://zoom.us/j/ashyqalem_family',
-  },
-  {
-    id: 'm4',
-    dayRu: 'Суббота', dayKz: 'Сенбі',
-    time: '11:00',
-    titleRu: 'Большой аул', titleKz: 'Үлкен ауыл',
-    descRu: 'Главный еженедельный сбор. Истории, силы, вехи.',
-    descKz: 'Басты апталық жиын. Оқиғалар, күш, белестер.',
-    type: 'general', color: '#6fcf8e',
-    zoomLink: 'https://zoom.us/j/ashyqalem_saturday',
-  },
-  {
-    id: 'm5',
-    dayRu: 'Воскресенье', dayKz: 'Жексенбі',
-    time: '16:00',
-    titleRu: 'Молодёжная юрта', titleKz: 'Жастар киіз үйі',
-    descRu: 'До 35 лет. Свободно, без формализма.',
-    descKz: '35-ке дейін. Еркін, формализмсіз.',
-    type: 'youth', color: '#60c5fa',
-    zoomLink: 'https://zoom.us/j/ashyqalem_youth',
-  },
-]
-
-// ─── Анонимные истории ────────────────────────────────────────────────────────
+interface Props { user: UserProfile | null; locale: 'ru' | 'kz'; onBack: () => void }
 
 interface Story {
   id: string
   date: string
-  daysPath: number
-  textRu: string
-  textKz: string
+  days: number
+  text: string
+  type: 'victory' | 'struggle' | 'gratitude' | 'milestone'
   hearts: number
-  type: 'victory' | 'struggle' | 'milestone' | 'gratitude'
 }
 
-// Встроенные истории — показываем пока нет реальных
-const SEED_STORIES: Story[] = [
-  {
-    id: 's1', date: '2025-02-15', daysPath: 90,
-    textRu: 'Три месяца. Первый раз за много лет отвёл сына в школу и не думал о выпивке. Просто шёл рядом с ним.',
-    textKz: 'Үш ай. Ұзақ жылдар ішінде бірінші рет ұлымды мектепке апардым және ішкілік туралы ойламадым. Жай онымен қатар жүрдім.',
-    hearts: 47, type: 'milestone',
-  },
-  {
-    id: 's2', date: '2025-02-10', daysPath: 21,
-    textRu: 'Сегодня было очень тяжело. Позвонил в скорую помощь — не себе, а другу который тоже борется. Помог ему. И вдруг стало легче.',
-    textKz: 'Бүгін өте ауыр болды. Жедел жәрдемге қоңырау шалдым — өзіме емес, күресіп жатқан досыма. Оған көмектестім. Және кенет жеңілдеді.',
-    hearts: 31, type: 'struggle',
-  },
-  {
-    id: 's3', date: '2025-01-30', daysPath: 7,
-    textRu: 'Неделя. Просто неделя. Я никогда не думал что смогу продержаться даже столько.',
-    textKz: 'Бір апта. Жай бір апта. Осыншалықта шыдай аламын деп ешқашан ойламадым.',
-    hearts: 89, type: 'victory',
-  },
-  {
-    id: 's4', date: '2025-02-18', daysPath: 180,
-    textRu: 'Полгода. Мама впервые за долгое время сказала что гордится мной. Я не смог не плакать.',
-    textKz: 'Жарты жыл. Анам ұзақ уақыт ішінде бірінші рет маған мақтанатынын айтты. Жыламай тұра алмадым.',
-    hearts: 124, type: 'milestone',
-  },
-  {
-    id: 's5', date: '2025-02-19', daysPath: 14,
-    textRu: 'Благодарен за эту неделю. За кофе утром. За закат. За то что просто дышу.',
-    textKz: 'Осы аптаға риза болдым. Таңғы кофеге. Батысқа. Жай тыныс алғаным үшін.',
-    hearts: 62, type: 'gratitude',
-  },
+const STORY_TYPES = {
+  victory:   { emoji: '🏆', ru: 'Победа',      kz: 'Жеңіс',      color: '#ffd060' },
+  struggle:  { emoji: '💪', ru: 'Честно',       kz: 'Шынайы',     color: '#f4a261' },
+  gratitude: { emoji: '🤍', ru: 'Благодарность', kz: 'Алғыс',     color: '#a78bfa' },
+  milestone: { emoji: '🌟', ru: 'Веха',         kz: 'Белес',      color: '#6fcf8e' },
+}
+
+const SAMPLE_STORIES: Story[] = [
+  { id: 's1', date: '2026-04-10', days: 45, text: 'Сегодня первый раз за месяц встретился с друзьями. Не пил. Было тяжело первые 30 минут, потом отпустило. Это победа.', type: 'victory', hearts: 24 },
+  { id: 's2', date: '2026-04-09', days: 12, text: 'Честно — сегодня была тяга. Написал другу, он поговорил со мной час. Степь помогла — вышел погулять. Прошло.', type: 'struggle', hearts: 31 },
+  { id: 's3', date: '2026-04-08', days: 90, text: '90 дней. Три месяца назад я не верил что это возможно. Спасибо всем кто здесь. Вы реально помогли.', type: 'milestone', hearts: 67 },
+  { id: 's4', date: '2026-04-07', days: 7, text: 'Неделя. Маленькая, но моя. Сон стал лучше. Жена заметила что я другой. Это стоит всего.', type: 'gratitude', hearts: 18 },
+  { id: 's5', date: '2026-04-06', days: 30, text: 'Месяц без алкоголя. Сэкономил 90,000 тенге. Купил дочке велосипед. Видел её улыбку — лучший кайф.', type: 'victory', hearts: 89 },
+]
+
+const FAMILY_GUIDE = [
+  { emoji: '🧠', ru: 'Что происходит с мозгом', kz: 'Мидың не болатыны', text_ru: 'Зависимость — это не слабость воли. Это изменение нейронных путей. Мозг зависимого буквально не может "просто остановиться". Это требует времени и поддержки.', text_kz: 'Тәуелділік — еріктің әлсіздігі емес. Бұл нейрондық жолдардың өзгеруі. Тәуелді адамның миы жай ғана "тоқтата алмайды".' },
+  { emoji: '💬', ru: 'Как говорить', kz: 'Қалай сөйлесу', text_ru: '✓ "Я беспокоюсь о тебе"\n✓ "Я вижу что тебе тяжело"\n✗ "Ты сам виноват"\n✗ "Просто возьми себя в руки"', text_kz: '✓ "Мен сен үшін алаңдаймын"\n✓ "Саған ауыр екенін көремін"\n✗ "Өзің кінәлісің"\n✗ "Жай ғана өзіңді ұст"' },
+  { emoji: '🚫', ru: 'Чего не делать', kz: 'Не істемеу', text_ru: '— Не скрывать последствия (это называется "созависимость")\n— Не угрожать, если не готов выполнить\n— Не пытаться контролировать каждый шаг\n— Не обвинять себя за его выбор', text_kz: '— Салдарды жасырмаңыз\n— Орындауға дайын болмасаңыз қорқытпаңыз\n— Әр қадамды бақылауға тырыспаңыз' },
+  { emoji: '🛡', ru: 'Созависимость', kz: 'Бірлескен тәуелділік', text_ru: 'Вы тоже в пути. Близкие зависимых часто теряют себя в попытке спасти другого. Ваши границы — это не эгоизм. Это необходимость.', text_kz: 'Сіз де жолдасыз. Тәуелді адамның жақындары жиі өздерін жоғалтады. Сіздің шекараларыңыз — эгоизм емес. Бұл қажеттілік.' },
 ]
 
 const STORIES_KEY = 'ashyq_aoul_stories'
 const HEARTS_KEY = 'ashyq_aoul_hearts'
 
-function loadStories(): Story[] {
-  try {
-    const local = JSON.parse(localStorage.getItem(STORIES_KEY) || '[]')
-    return [...SEED_STORIES, ...local].sort((a, b) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    )
-  } catch { return SEED_STORIES }
-}
-
-function loadHearts(): Set<string> {
-  try {
-    const data = localStorage.getItem(HEARTS_KEY)
-    return new Set(data ? JSON.parse(data) : [])
-  } catch { return new Set() }
-}
-
-// ─── Типы историй ─────────────────────────────────────────────────────────────
-
-const STORY_TYPES = {
-  victory:   { emoji: '🏆', ru: 'Победа',      kz: 'Жеңіс',      color: '#ffd060' },
-  struggle:  { emoji: '🌧',  ru: 'Честно',      kz: 'Шынайы',      color: '#60c5fa' },
-  milestone: { emoji: '✦',  ru: 'Веха',        kz: 'Белес',       color: '#6fcf8e' },
-  gratitude: { emoji: '🤍',  ru: 'Благодарность', kz: 'Ризашылық', color: '#f4a261' },
-}
-
-// ─── SOS контакты ─────────────────────────────────────────────────────────────
-
-const SOS_CONTACTS = [
-  {
-    nameRu: 'Телефон доверия КЗ',
-    nameKz: 'Сенім телефоны ҚЗ',
-    phone: '8-800-080-8800',
-    descRu: 'Бесплатно, круглосуточно',
-    descKz: 'Тегін, тəулік бойы',
-    color: '#f87171',
-  },
-  {
-    nameRu: 'Скорая психологическая',
-    nameKz: 'Психологиялық жедел жəрдем',
-    phone: '051',
-    descRu: 'Экстренная психологическая помощь',
-    descKz: 'Шұғыл психологиялық көмек',
-    color: '#ffd060',
-  },
-  {
-    nameRu: 'Наркологическая служба',
-    nameKz: 'Наркологиялық қызмет',
-    phone: '109',
-    descRu: 'Анонимно. Без осуждения.',
-    descKz: 'Анонимді. Соттамай.',
-    color: '#6fcf8e',
-  },
-]
-
-// ─── КОМПОНЕНТЫ ──────────────────────────────────────────────────────────────
-
-// Карточка встречи
-function MeetingCard({ meeting, isKz }: { meeting: Meeting; isKz: boolean }) {
-  const [joining, setJoining] = useState(false)
-
-  function handleJoin() {
-    setJoining(true)
-    // В реальной версии — открываем Zoom
-    window.open(meeting.zoomLink, '_blank')
-    setTimeout(() => setJoining(false), 2000)
-  }
-
-  const typeLabel = {
-    general: { ru: 'Общая', kz: 'Жалпы' },
-    family:  { ru: 'Семьи', kz: 'Отбасы' },
-    women:   { ru: 'Женщины', kz: 'Əйелдер' },
-    men:     { ru: 'Мужчины', kz: 'Ерлер' },
-    youth:   { ru: 'Молодёжь', kz: 'Жастар' },
-  }[meeting.type]
-
-  return (
-    <div style={{
-      padding: '16px',
-      borderRadius: '18px',
-      background: `${meeting.color}0e`,
-      border: `1px solid ${meeting.color}30`,
-      display: 'flex',
-      gap: '14px',
-      alignItems: 'center',
-    }}>
-      {/* Время */}
-      <div style={{
-        flexShrink: 0,
-        width: '52px',
-        textAlign: 'center',
-      }}>
-        <div style={{ fontSize: '16px', fontWeight: 800, color: meeting.color }}>
-          {meeting.time}
-        </div>
-        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
-          {isKz ? meeting.dayKz.slice(0, 3) : meeting.dayRu.slice(0, 3)}
-        </div>
-      </div>
-
-      {/* Разделитель */}
-      <div style={{ width: '1px', height: '40px', background: `${meeting.color}30`, flexShrink: 0 }} />
-
-      {/* Инфо */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-          <span style={{
-            fontSize: '10px',
-            padding: '2px 8px',
-            borderRadius: '8px',
-            background: `${meeting.color}20`,
-            color: meeting.color,
-            fontWeight: 600,
-          }}>
-            {isKz ? typeLabel.kz : typeLabel.ru}
-          </span>
-        </div>
-        <div style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>
-          {isKz ? meeting.titleKz : meeting.titleRu}
-        </div>
-        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.40)', marginTop: '2px', lineHeight: 1.4 }}>
-          {isKz ? meeting.descKz : meeting.descRu}
-        </div>
-      </div>
-
-      {/* Кнопка */}
-      <button
-        onClick={handleJoin}
-        style={{
-          flexShrink: 0,
-          padding: '8px 12px',
-          borderRadius: '12px',
-          border: `1px solid ${meeting.color}50`,
-          background: joining ? `${meeting.color}30` : `${meeting.color}15`,
-          color: meeting.color,
-          fontSize: '12px',
-          fontWeight: 600,
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          transition: 'all 0.2s',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {joining ? '✓' : (isKz ? 'Қосылу' : 'Войти')}
-      </button>
-    </div>
-  )
-}
-
-// Карточка истории
-function StoryCard({
-  story,
-  isKz,
-  onHeart,
-  hearted,
-}: {
-  story: Story
-  isKz: boolean
-  onHeart: (id: string) => void
-  hearted: boolean
-}) {
-  const typeInfo = STORY_TYPES[story.type]
-
-  const dayWord = story.daysPath === 1 ? 'день'
-    : story.daysPath < 5 ? 'дня' : 'дней'
-
-  return (
-    <div style={{
-      padding: '16px',
-      borderRadius: '18px',
-      background: 'rgba(255,255,255,0.04)',
-      border: `1px solid ${hearted ? typeInfo.color + '40' : 'rgba(255,255,255,0.07)'}`,
-      transition: 'border-color 0.3s',
-    }}>
-      {/* Шапка */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-        <span style={{ fontSize: '18px' }}>{typeInfo.emoji}</span>
-        <span style={{
-          fontSize: '11px',
-          padding: '2px 8px',
-          borderRadius: '8px',
-          background: `${typeInfo.color}18`,
-          color: typeInfo.color,
-          fontWeight: 600,
-        }}>
-          {isKz ? typeInfo.kz : typeInfo.ru}
-        </span>
-        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', marginLeft: 'auto' }}>
-          {story.daysPath} {isKz ? 'күн' : dayWord} • {isKz ? 'Анонимді' : 'Анонимно'}
-        </span>
-      </div>
-
-      {/* Текст */}
-      <p style={{
-        margin: 0,
-        fontSize: '14px',
-        color: 'rgba(255,255,255,0.80)',
-        lineHeight: 1.7,
-        fontStyle: 'italic',
-      }}>
-        «{isKz ? story.textKz : story.textRu}»
-      </p>
-
-      {/* Поддержка */}
-      <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
-        <button
-          onClick={() => onHeart(story.id)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            padding: '5px 12px',
-            borderRadius: '12px',
-            border: `1px solid ${hearted ? '#f87171' : 'rgba(255,255,255,0.10)'}`,
-            background: hearted ? 'rgba(248,113,113,0.12)' : 'transparent',
-            color: hearted ? '#f87171' : 'rgba(255,255,255,0.35)',
-            fontSize: '13px',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            transition: 'all 0.2s',
-          }}
-        >
-          {hearted ? '❤️' : '🤍'} {story.hearts + (hearted ? 1 : 0)}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ─── ГЛАВНЫЙ КОМПОНЕНТ ────────────────────────────────────────────────────────
-
 export default function AoulSection({ user, locale, onBack }: Props) {
   const isKz = locale === 'kz'
-  const [activeTab, setActiveTab] = useState<Tab>('aoul')
-  const [stories, setStories] = useState<Story[]>([])
+  const [tab, setTab] = useState<'aoul' | 'family' | 'sos'>('aoul')
+  const [stories, setStories] = useState<Story[]>(SAMPLE_STORIES)
   const [heartedIds, setHeartedIds] = useState<Set<string>>(new Set())
-  const [showStoryForm, setShowStoryForm] = useState(false)
-  const [newStoryText, setNewStoryText] = useState('')
-  const [newStoryType, setNewStoryType] = useState<Story['type']>('victory')
-  const [storyPosted, setStoryPosted] = useState(false)
-  const [showSos, setShowSos] = useState(false)
-
-  const days = Math.floor(
-    (Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-  )
+  const [showWrite, setShowWrite] = useState(false)
+  const [newText, setNewText] = useState('')
+  const [newType, setNewType] = useState<Story['type']>('victory')
+  const [expandedGuide, setExpandedGuide] = useState<number | null>(null)
+  const userDays = user ? Math.floor((Date.now() - new Date(user.createdAt).getTime()) / 86400000) : 0
 
   useEffect(() => {
-    setStories(loadStories())
-    setHeartedIds(loadHearts())
+    const saved = localStorage.getItem(STORIES_KEY)
+    const hearts = localStorage.getItem(HEARTS_KEY)
+    if (saved) setStories([...JSON.parse(saved), ...SAMPLE_STORIES])
+    if (hearts) setHeartedIds(new Set(JSON.parse(hearts)))
   }, [])
 
-  function handleHeart(id: string) {
-    const newSet = new Set(heartedIds)
-    if (newSet.has(id)) newSet.delete(id)
-    else newSet.add(id)
-    setHeartedIds(newSet)
-    // ТУТ ИСПРАВЛЕНИЕ: Array.from(newSet) вместо [...newSet] для прохождения билда
-    localStorage.setItem(HEARTS_KEY, JSON.stringify(Array.from(newSet)))
-  }
-
-  function postStory() {
-    if (!newStoryText.trim()) return
-    const story: Story = {
-      id: `u_${Date.now()}`,
-      date: new Date().toISOString().slice(0, 10),
-      daysPath: days,
-      textRu: newStoryText.trim(),
-      textKz: newStoryText.trim(),
-      hearts: 0,
-      type: newStoryType,
+  function toggleHeart(id: string) {
+    const next = new Set(heartedIds)
+    if (next.has(id)) {
+      next.delete(id)
+      setStories(prev => prev.map(s => s.id === id ? { ...s, hearts: s.hearts - 1 } : s))
+    } else {
+      next.add(id)
+      setStories(prev => prev.map(s => s.id === id ? { ...s, hearts: s.hearts + 1 } : s))
     }
-    const local = JSON.parse(localStorage.getItem(STORIES_KEY) || '[]')
-    localStorage.setItem(STORIES_KEY, JSON.stringify([story, ...local]))
-    setStories(loadStories())
-    setNewStoryText('')
-    setShowStoryForm(false)
-    setStoryPosted(true)
-    setTimeout(() => setStoryPosted(false), 3000)
+    setHeartedIds(next)
+    localStorage.setItem(HEARTS_KEY, JSON.stringify([...next]))
   }
 
-  const tabs: { id: Tab; ru: string; kz: string; emoji: string }[] = [
-    { id: 'aoul',    ru: 'Аул',     kz: 'Ауыл',    emoji: '🏕' },
-    { id: 'stories', ru: 'Истории', kz: 'Оқиғалар', emoji: '📖' },
-    { id: 'family',  ru: 'Семьям',  kz: 'Отбасы',  emoji: '🤝' },
-    { id: 'sos',     ru: 'SOS',     kz: 'SOS',     emoji: '🆘' },
+  function submitStory() {
+    if (!newText.trim() || !user) return
+    const story: Story = {
+      id: Date.now().toString(),
+      date: new Date().toISOString().slice(0, 10),
+      days: userDays,
+      text: newText.trim(),
+      type: newType,
+      hearts: 0,
+    }
+    const updated = [story, ...stories]
+    setStories(updated)
+    const userStories = updated.filter(s => !SAMPLE_STORIES.find(ss => ss.id === s.id))
+    localStorage.setItem(STORIES_KEY, JSON.stringify(userStories))
+    setNewText('')
+    setShowWrite(false)
+  }
+
+  function shareProgress() {
+    const text = isKz
+      ? `Мен ${userDays} күн еркіндікте! Ұлы Дала Жолы платформасымен бірге. 🐎`
+      : `Я ${userDays} дней свободы! Вместе с платформой Ұлы Дала Жолы. 🐎`
+    if (navigator.share) {
+      navigator.share({ title: 'Ұлы Дала Жолы', text })
+    } else {
+      navigator.clipboard.writeText(text)
+    }
+  }
+
+  const tabs = [
+    { id: 'aoul', emoji: '🏕', ru: 'Аул', kz: 'Ауыл' },
+    { id: 'family', emoji: '🤝', ru: 'Семьям', kz: 'Отбасыға' },
+    { id: 'sos', emoji: '🆘', ru: 'SOS', kz: 'Көмек' },
   ]
 
   return (
-    <SectionShell
-      locale={locale}
-      title={isKz ? 'Цифрлық Ауыл' : 'Цифровой Аул'}
-      icon="🏕"
-      onBack={onBack}
-      accentColor="rgba(244,162,97,0.6)"
-    >
-      <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+    <SectionShell locale={locale} title={isKz ? 'Цифрлық Ауыл' : 'Цифровой Аул'} icon="🏕" onBack={onBack} accentColor="rgba(244,162,97,0.6)">
+      <style>{`
+        @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        .story-card:hover { border-color: rgba(255,200,60,0.25) !important; }
+        .story-card { transition: all 0.18s ease; }
+        .heart-btn:hover { transform: scale(1.2); }
+        .heart-btn { transition: transform 0.15s ease; }
+        .guide-item:hover { border-color: rgba(244,162,97,0.30) !important; }
+        .guide-item { transition: all 0.2s ease; cursor: pointer; }
+      `}</style>
 
-        {/* Табы */}
-        <div style={{
-          display: 'flex',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-          background: 'rgba(0,0,0,0.20)',
-        }}>
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                flex: 1,
-                padding: '12px 4px',
-                border: 'none',
-                borderBottom: activeTab === tab.id
-                  ? '2px solid #f4a261'
-                  : '2px solid transparent',
-                background: 'transparent',
-                color: activeTab === tab.id ? '#f4a261' : 'rgba(255,255,255,0.35)',
-                fontSize: '11px',
-                fontWeight: activeTab === tab.id ? 700 : 400,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                transition: 'all 0.18s',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '3px',
-              }}
-            >
-              <span style={{ fontSize: '16px' }}>{tab.emoji}</span>
-              {isKz ? tab.kz : tab.ru}
-              {tab.id === 'sos' && (
-                <div style={{
-                  width: '6px', height: '6px',
-                  borderRadius: '50%',
-                  background: '#f87171',
-                  position: 'absolute',
-                  marginTop: '-22px',
-                  marginLeft: '14px',
-                }} />
-              )}
+      <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%', paddingBottom: '80px' }}>
+
+        {/* ТАБЫ */}
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.20)' }}>
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id as any)}
+              style={{ flex: 1, padding: '12px 4px', border: 'none', borderBottom: tab === t.id ? '2px solid #f4a261' : '2px solid transparent', background: 'transparent', color: tab === t.id ? '#f4a261' : 'rgba(255,255,255,0.30)', fontSize: '11px', fontWeight: tab === t.id ? 700 : 400, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
+              <span style={{ fontSize: '18px' }}>{t.emoji}</span>
+              {isKz ? t.kz : t.ru}
             </button>
           ))}
         </div>
 
-        <div style={{ padding: '16px 16px 48px', overflowY: 'auto' }}>
+        {/* ═══ АУЛ ═══ */}
+        {tab === 'aoul' && (
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-          {/* ══ ТАБ: АУЛ ══ */}
-          {activeTab === 'aoul' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-              {/* Визуальная карта аула */}
-              <div style={{
-                padding: '20px',
-                borderRadius: '24px',
-                background: 'rgba(0,0,0,0.30)',
-                border: '1px solid rgba(244,162,97,0.20)',
-                textAlign: 'center',
-              }}>
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.40)', marginBottom: '16px', letterSpacing: '0.08em' }}>
-                  {isKz ? '🏕 АУЫЛ КАРТАСЫ' : '🏕 КАРТА АУЛА'}
-                </div>
-
-                {/* Три круга */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {[
-                    {
-                      emoji: '🔥', color: '#ffd060',
-                      ru: 'Твой костёр — личное пространство',
-                      kz: 'Сенің отың — жеке кеңістік',
-                      sub_ru: 'Дневник, мысли, прогресс',
-                      sub_kz: 'Күнделік, ойлар, прогресс',
-                    },
-                    {
-                      emoji: '🏕', color: '#f4a261',
-                      ru: 'Общий аул — сообщество пути',
-                      kz: 'Жалпы ауыл — жол қауымдастығы',
-                      sub_ru: 'Встречи, истории, поддержка',
-                      sub_kz: 'Жиындар, оқиғалар, қолдау',
-                    },
-                    {
-                      emoji: '🤝', color: '#a78bfa',
-                      ru: 'Круг семей — только близким',
-                      kz: 'Отбасы шеңбері — тек жақындарға',
-                      sub_ru: 'Их путь, их пространство',
-                      sub_kz: 'Олардың жолы, олардың кеңістігі',
-                    },
-                  ].map((circle, i) => (
-                    <div key={i} style={{
-                      padding: '12px 16px',
-                      borderRadius: '16px',
-                      background: `${circle.color}0e`,
-                      border: `1px solid ${circle.color}25`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      textAlign: 'left',
-                    }}>
-                      <span style={{ fontSize: '24px', flexShrink: 0 }}>{circle.emoji}</span>
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: circle.color }}>
-                          {isKz ? circle.kz : circle.ru}
-                        </div>
-                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
-                          {isKz ? circle.sub_kz : circle.sub_ru}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            {/* Шапка с описанием */}
+            <div style={{ padding: '16px', borderRadius: '20px', background: 'rgba(244,162,97,0.07)', border: '1px solid rgba(244,162,97,0.18)' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,200,100,0.90)', marginBottom: '6px' }}>
+                🏕 {isKz ? 'Цифрлық Ауыл' : 'Цифровой Аул'}
               </div>
-
-              {/* Расписание встреч */}
-              <div>
-                <div style={{
-                  fontSize: '11px',
-                  color: 'rgba(255,255,255,0.35)',
-                  letterSpacing: '0.10em',
-                  textTransform: 'uppercase',
-                  marginBottom: '12px',
-                }}>
-                  📅 {isKz ? 'АПТАЛЫҚ ЖИЫНДАР' : 'ЕЖЕНЕДЕЛЬНЫЕ ВСТРЕЧИ'}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {MEETINGS.map(m => (
-                    <MeetingCard key={m.id} meeting={m} isKz={isKz} />
-                  ))}
-                </div>
-              </div>
-
-              {/* Тематические юрты */}
-              <div>
-                <div style={{
-                  fontSize: '11px',
-                  color: 'rgba(255,255,255,0.35)',
-                  letterSpacing: '0.10em',
-                  textTransform: 'uppercase',
-                  marginBottom: '12px',
-                }}>
-                  🏠 {isKz ? 'ТЕМАТИКАЛЫҚ КИІЗ ҮЙЛЕР' : 'ТЕМАТИЧЕСКИЕ ЮРТЫ'}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  {[
-                    { emoji: '🍺', ru: 'Алкоголь', kz: 'Алкоголь', color: '#f4a261', count: 847 },
-                    { emoji: '💊', ru: 'Вещества', kz: 'Заттар', color: '#f87171', count: 432 },
-                    { emoji: '🎰', ru: 'Азарт', kz: 'Азарт', color: '#ffd060', count: 213 },
-                    { emoji: '📱', ru: 'Цифровое', kz: 'Цифрлық', color: '#60c5fa', count: 156 },
-                    { emoji: '🍫', ru: 'Пищевое', kz: 'Тамақ', color: '#6fcf8e', count: 98 },
-                    { emoji: '💔', ru: 'Со-зависимость', kz: 'Ко-тəуелділік', color: '#a78bfa', count: 341 },
-                  ].map((yurt, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        // Будущий переход в тематическую комнату
-                        alert(isKz
-                          ? `"${yurt.kz}" юртасы жақында ашылады!`
-                          : `Юрта "${yurt.ru}" откроется скоро!`
-                        )
-                      }}
-                      style={{
-                        padding: '14px',
-                        borderRadius: '16px',
-                        border: `1px solid ${yurt.color}25`,
-                        background: `${yurt.color}0a`,
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                        textAlign: 'left',
-                        transition: 'all 0.18s',
-                      }}
-                    >
-                      <div style={{ fontSize: '22px', marginBottom: '6px' }}>{yurt.emoji}</div>
-                      <div style={{ fontSize: '12px', fontWeight: 600, color: yurt.color }}>
-                        {isKz ? yurt.kz : yurt.ru}
-                      </div>
-                      <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', marginTop: '2px' }}>
-                        {yurt.count} {isKz ? 'адам' : 'чел.'}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                <p style={{
-                  margin: '10px 0 0',
-                  fontSize: '11px',
-                  color: 'rgba(255,255,255,0.20)',
-                  textAlign: 'center',
-                }}>
-                  {isKz ? '💬 Чаттар жақында ашылады — бэкенд əзірленуде' : '💬 Чаты откроются скоро — бэкенд в разработке'}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* ══ ТАБ: ИСТОРИИ ══ */}
-          {activeTab === 'stories' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-
-              {/* Кнопка "Поделиться" */}
-              {storyPosted ? (
-                <div style={{
-                  padding: '14px',
-                  borderRadius: '16px',
-                  background: 'rgba(111,207,142,0.12)',
-                  border: '1px solid rgba(111,207,142,0.30)',
-                  textAlign: 'center',
-                  fontSize: '14px',
-                  color: '#6fcf8e',
-                  fontWeight: 600,
-                }}>
-                  ✓ {isKz ? 'Оқиға жарияланды! Аул сені естиді.' : 'История опубликована! Аул слышит тебя.'}
-                </div>
-              ) : !showStoryForm ? (
-                <button
-                  onClick={() => setShowStoryForm(true)}
-                  style={{
-                    padding: '14px',
-                    borderRadius: '16px',
-                    border: '1px dashed rgba(244,162,97,0.35)',
-                    background: 'rgba(244,162,97,0.05)',
-                    color: '#f4a261',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  + {isKz ? 'Өз оқиғаңды бөліс (анонимді)' : 'Поделиться своей историей (анонимно)'}
+              <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
+                {isKz
+                  ? 'Мұнда біз бір-бірімізге қолдау көрсетеміз. Анонимді, сотсыз, жылы.'
+                  : 'Здесь мы поддерживаем друг друга. Анонимно, без осуждения, с теплом.'}
+              </p>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                {user && (
+                  <button onClick={() => setShowWrite(!showWrite)}
+                    style={{ flex: 1, padding: '10px', borderRadius: '14px', border: '1px solid rgba(244,162,97,0.40)', background: 'rgba(244,162,97,0.12)', color: '#f4a261', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    ✍️ {isKz ? 'Жазу' : 'Поделиться'}
+                  </button>
+                )}
+                <button onClick={shareProgress}
+                  style={{ flex: 1, padding: '10px', borderRadius: '14px', border: '1px solid rgba(167,139,250,0.35)', background: 'rgba(167,139,250,0.10)', color: '#a78bfa', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  📤 {isKz ? 'Бөлісу' : 'Поделиться прогрессом'}
                 </button>
-              ) : (
-                <div style={{
-                  padding: '16px',
-                  borderRadius: '18px',
-                  background: 'rgba(244,162,97,0.08)',
-                  border: '1px solid rgba(244,162,97,0.25)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                }}>
-                  {/* Тип истории */}
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {(Object.keys(STORY_TYPES) as Story['type'][]).map(type => {
-                      const info = STORY_TYPES[type]
-                      return (
-                        <button
-                          key={type}
-                          onClick={() => setNewStoryType(type)}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '12px',
-                            border: `1px solid ${newStoryType === type ? info.color : 'rgba(255,255,255,0.10)'}`,
-                            background: newStoryType === type ? `${info.color}20` : 'transparent',
-                            color: newStoryType === type ? info.color : 'rgba(255,255,255,0.40)',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            fontFamily: 'inherit',
-                          }}
-                        >
-                          {info.emoji} {isKz ? info.kz : info.ru}
-                        </button>
-                      )
-                    })}
-                  </div>
+              </div>
+            </div>
 
-                  <textarea
-                    value={newStoryText}
-                    onChange={e => setNewStoryText(e.target.value)}
-                    placeholder={isKz
-                      ? 'Бүгін не болды? Бір шын сөз жаз... (аты-жөнсіз жарияланады)'
-                      : 'Что произошло? Одно честное слово... (публикуется анонимно)'}
-                    rows={4}
-                    maxLength={500}
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255,255,255,0.10)',
-                      background: 'rgba(255,255,255,0.05)',
-                      color: 'white',
-                      fontSize: '14px',
-                      fontFamily: 'inherit',
-                      resize: 'none',
-                      outline: 'none',
-                      lineHeight: 1.55,
-                      boxSizing: 'border-box',
-                    }}
-                  />
-
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={() => setShowStoryForm(false)}
-                      style={{
-                        flex: 1, padding: '10px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(255,255,255,0.10)',
-                        background: 'transparent',
-                        color: 'rgba(255,255,255,0.40)',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      {isKz ? 'Болдырмау' : 'Отмена'}
-                    </button>
-                    <button
-                      onClick={postStory}
-                      disabled={!newStoryText.trim()}
-                      style={{
-                        flex: 2, padding: '10px',
-                        borderRadius: '12px',
-                        border: 'none',
-                        background: newStoryText.trim() ? 'rgba(244,162,97,0.85)' : 'rgba(255,255,255,0.06)',
-                        color: newStoryText.trim() ? '#1a0f00' : 'rgba(255,255,255,0.20)',
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        cursor: newStoryText.trim() ? 'pointer' : 'not-allowed',
-                        fontFamily: 'inherit',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      {isKz ? 'Аулға жіберу 🏕' : 'Отправить в аул 🏕'}
-                    </button>
-                  </div>
+            {/* Форма написания */}
+            {showWrite && user && (
+              <div style={{ padding: '16px', borderRadius: '20px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', animation: 'fadeUp 0.3s ease' }}>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.40)', marginBottom: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.10em' }}>
+                  {isKz ? 'Жаз, ауыл тыңдайды' : 'Пиши — аул слушает'}
                 </div>
-              )}
-
-              {/* Ленты историй */}
-              {stories.map(story => (
-                <StoryCard
-                  key={story.id}
-                  story={story}
-                  isKz={isKz}
-                  onHeart={handleHeart}
-                  hearted={heartedIds.has(story.id)}
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                  {(Object.entries(STORY_TYPES) as [Story['type'], typeof STORY_TYPES[keyof typeof STORY_TYPES]][]).map(([key, cfg]) => (
+                    <button key={key} onClick={() => setNewType(key)}
+                      style={{ padding: '5px 12px', borderRadius: '12px', border: `1px solid ${newType === key ? cfg.color : 'rgba(255,255,255,0.08)'}`, background: newType === key ? `${cfg.color}18` : 'transparent', color: newType === key ? cfg.color : 'rgba(255,255,255,0.40)', fontSize: '11px', fontWeight: newType === key ? 700 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {cfg.emoji} {isKz ? (key === 'victory' ? 'Жеңіс' : key === 'struggle' ? 'Шынайы' : key === 'gratitude' ? 'Алғыс' : 'Белес') : cfg.ru}
+                    </button>
+                  ))}
+                </div>
+                <textarea value={newText} onChange={e => setNewText(e.target.value)}
+                  placeholder={isKz ? 'Бүгін не болды? Аулға айт...' : 'Что произошло сегодня? Расскажи аулу...'}
+                  rows={4}
+                  style={{ width: '100%', padding: '12px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.04)', color: 'white', fontSize: '14px', resize: 'none', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', lineHeight: 1.6 }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(244,162,97,0.40)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.09)'}
                 />
-              ))}
-            </div>
-          )}
-
-          {/* ══ ТАБ: СЕМЬЯМ ══ */}
-          {activeTab === 'family' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-
-              {/* Важный блок */}
-              <div style={{
-                padding: '18px',
-                borderRadius: '20px',
-                background: 'rgba(167,139,250,0.08)',
-                border: '1px solid rgba(167,139,250,0.25)',
-              }}>
-                <div style={{ fontSize: '22px', marginBottom: '10px', textAlign: 'center' }}>🤝</div>
-                <h3 style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 700, textAlign: 'center' }}>
-                  {isKz ? 'Бұл бет — сіздікі' : 'Эта страница — ваша'}
-                </h3>
-                <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.7, textAlign: 'center' }}>
-                  {isKz
-                    ? 'Сіз де жолдасыз. Тəуелдінің жолы — сіздің де жолыңыз. Мұнда соттамайды.'
-                    : 'Вы тоже в пути. Путь зависимого — ваш путь тоже. Здесь не осуждают.'}
-                </p>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                  <button onClick={submitStory} disabled={!newText.trim()}
+                    style={{ flex: 1, padding: '11px', borderRadius: '14px', border: 'none', background: newText.trim() ? 'rgba(244,162,97,0.85)' : 'rgba(255,255,255,0.06)', color: newText.trim() ? '#1a0f00' : 'rgba(255,255,255,0.20)', fontSize: '13px', fontWeight: 700, cursor: newText.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+                    {isKz ? 'Жариялау' : 'Опубликовать'}
+                  </button>
+                  <button onClick={() => setShowWrite(false)}
+                    style={{ padding: '11px 16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(255,255,255,0.35)', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {isKz ? 'Болдырмау' : 'Отмена'}
+                  </button>
+                </div>
               </div>
+            )}
 
-              {/* Гид для семей */}
+            {/* Истории */}
+            {stories.map(story => {
+              const cfg = STORY_TYPES[story.type]
+              const hearted = heartedIds.has(story.id)
+              return (
+                <div key={story.id} className="story-card"
+                  style={{ padding: '16px', borderRadius: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', animation: 'fadeUp 0.3s ease' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `${cfg.color}15`, border: `1px solid ${cfg.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
+                      {cfg.emoji}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: cfg.color }}>
+                        {isKz ? (story.type === 'victory' ? 'Жеңіс' : story.type === 'struggle' ? 'Шынайы' : story.type === 'gratitude' ? 'Алғыс' : 'Белес') : cfg.ru}
+                      </div>
+                      <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>
+                        {story.days} {isKz ? 'күн жолда' : 'дней в пути'} · {story.date}
+                      </div>
+                    </div>
+                    <button className="heart-btn" onClick={() => toggleHeart(story.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                      <span style={{ fontSize: '18px', filter: hearted ? 'none' : 'grayscale(1)', opacity: hearted ? 1 : 0.5 }}>❤️</span>
+                      <span style={{ fontSize: '10px', color: hearted ? '#f87171' : 'rgba(255,255,255,0.25)', fontWeight: hearted ? 700 : 400 }}>{story.hearts}</span>
+                    </button>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.65 }}>
+                    {story.text}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* ═══ СЕМЬЯМ ═══ */}
+        {tab === 'family' && (
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+            <div style={{ padding: '18px', borderRadius: '20px', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.20)', textAlign: 'center' }}>
+              <div style={{ fontSize: '28px', marginBottom: '10px' }}>🤝</div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'rgba(220,200,255,0.90)', marginBottom: '8px' }}>
+                {isKz ? 'Бұл бет — сіздікі' : 'Эта страница — ваша'}
+              </div>
+              <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>
+                {isKz
+                  ? 'Сіз де жолдасыз. Тәуелдінің жолы — сіздің де жолыңыз. Мұнда сіз жалғыз емессіз.'
+                  : 'Вы тоже в пути. Путь зависимого — это и ваш путь. Здесь вы не одни.'}
+              </p>
+            </div>
+
+            {FAMILY_GUIDE.map((item, i) => (
+              <div key={i} className="guide-item"
+                onClick={() => setExpandedGuide(expandedGuide === i ? null : i)}
+                style={{ padding: '16px', borderRadius: '20px', background: 'rgba(255,255,255,0.03)', border: `1px solid ${expandedGuide === i ? 'rgba(167,139,250,0.35)' : 'rgba(255,255,255,0.07)'}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '24px' }}>{item.emoji}</span>
+                  <div style={{ flex: 1, fontSize: '14px', fontWeight: 600, color: expandedGuide === i ? 'rgba(210,185,255,0.95)' : 'rgba(255,255,255,0.80)' }}>
+                    {isKz ? item.kz : item.ru}
+                  </div>
+                  <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '16px' }}>{expandedGuide === i ? '▲' : '▼'}</span>
+                </div>
+                {expandedGuide === i && (
+                  <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '13px', color: 'rgba(255,255,255,0.60)', lineHeight: 1.70, whiteSpace: 'pre-line', animation: 'fadeUp 0.25s ease' }}>
+                    {isKz ? item.text_kz : item.text_ru}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <div style={{ padding: '16px', borderRadius: '20px', background: 'rgba(96,197,250,0.07)', border: '1px solid rgba(96,197,250,0.18)', textAlign: 'center' }}>
+              <div style={{ fontSize: '13px', color: 'rgba(150,220,255,0.75)', lineHeight: 1.6, marginBottom: '12px' }}>
+                {isKz ? '📅 Жақындарға арналған онлайн-жиын — жұма сайын 20:00' : '📅 Онлайн встреча для близких — каждую пятницу 20:00'}
+              </div>
+              <a href="https://t.me/ulydalazholy" target="_blank" rel="noreferrer"
+                style={{ display: 'inline-block', padding: '10px 24px', borderRadius: '14px', background: 'rgba(96,197,250,0.15)', border: '1px solid rgba(96,197,250,0.30)', color: '#60c5fa', fontSize: '13px', fontWeight: 700, textDecoration: 'none' }}>
+                {isKz ? '➡️ Қосылу' : '➡️ Присоединиться'}
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ SOS ═══ */}
+        {tab === 'sos' && (
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+            <div style={{ padding: '20px', borderRadius: '20px', background: 'rgba(248,113,113,0.10)', border: '1px solid rgba(248,113,113,0.28)', textAlign: 'center' }}>
+              <div style={{ fontSize: '36px', marginBottom: '10px' }}>🆘</div>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#f87171', marginBottom: '6px' }}>
+                {isKz ? 'Сен жалғыз емессің' : 'Ты не один'}
+              </div>
+              <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
+                {isKz ? 'Тяга — это волна. Она нарастает и спадает. Средняя длина — 20 минут. Позвони прямо сейчас.' : 'Тяга — это волна. Она нарастает и спадает. Средняя длина — 20 минут. Позвони прямо сейчас.'}
+              </p>
+            </div>
+
+            {[
+              { name: 'Национальная линия доверия', nameKz: 'Ұлттық сенім желісі', phone: '150', desc_ru: 'Бесплатно, круглосуточно', desc_kz: 'Тегін, тәулік бойы', color: '#f87171' },
+              { name: 'Служба психологической помощи', nameKz: 'Психологиялық көмек', phone: '111', desc_ru: 'Помощь семьям и детям', desc_kz: 'Отбасы мен балаларға', color: '#f4a261' },
+              { name: 'Amanat Rehab', nameKz: 'Amanat Rehab', phone: '+7 701 223 75 57', desc_ru: 'Реабилитационный центр, круглосуточно', desc_kz: 'Оңалту орталығы, тәулік бойы', color: '#6fcf8e' },
+            ].map((c, i) => (
+              <a key={i} href={`tel:${c.phone}`}
+                style={{ padding: '16px', borderRadius: '20px', background: `${c.color}0a`, border: `1px solid ${c.color}28`, display: 'flex', alignItems: 'center', gap: '14px', textDecoration: 'none', transition: 'all 0.2s' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: `${c.color}18`, border: `1px solid ${c.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>📞</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.88)', marginBottom: '3px' }}>{isKz ? c.nameKz : c.name}</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>{isKz ? c.desc_kz : c.desc_ru}</div>
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 900, color: c.color, flexShrink: 0 }}>{c.phone}</div>
+              </a>
+            ))}
+
+            {/* Техника 5-4-3-2-1 */}
+            <div style={{ padding: '18px', borderRadius: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,200,60,0.80)', marginBottom: '12px' }}>
+                ⚡ {isKz ? 'Жерге байлану техникасы (5-4-3-2-1)' : 'Техника заземления (5-4-3-2-1)'}
+              </div>
               {[
-                {
-                  emoji: '🧠',
-                  titleRu: 'Что происходит с вашим близким',
-                  titleKz: 'Жақыныңызға не болып жатыр',
-                  pointsRu: [
-                    'Зависимость — это болезнь мозга, не слабость характера.',
-                    'Он/она не выбирает страдать. Мозг изменён химически.',
-                    'Выздоровление реально — но требует времени и поддержки.',
-                  ],
-                  pointsKz: [
-                    'Тəуелділік — мінез əлсіздігі емес, ми ауруы.',
-                    'Ол зардап шегуді таңдамайды. Ми химиялық өзгерген.',
-                    'Жазылу шынайы — бірақ уақыт пен қолдауды қажет етеді.',
-                  ],
-                  color: '#a78bfa',
-                },
-                {
-                  emoji: '💪',
-                  titleRu: 'Как помочь — не разрушая себя',
-                  titleKz: 'Өзіңді бұзбай қалай көмектесу',
-                  pointsRu: [
-                    'Говорите о поведении, не о личности. "Когда ты..." не "ты всегда..."',
-                    'Устанавливайте границы из любви, не из наказания.',
-                    'Вы не можете выздороветь за него. Только рядом.',
-                    'Ваша стабильность — это тоже лечение.',
-                  ],
-                  pointsKz: [
-                    'Тұлға туралы емес, мінез-құлық туралы сөйлеңіз.',
-                    'Жазалаудан емес, сүйіспеншіліктен шекара қойыңыз.',
-                    'Оның орнына жазыла алмайсыз. Тек қасында.',
-                    'Сіздің тұрақтылығыңыз — бұл да емдеу.',
-                  ],
-                  color: '#6fcf8e',
-                }
-              ].map((item, i) => (
-                <div key={i} style={{
-                  padding: '16px',
-                  borderRadius: '18px',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                    <span style={{ fontSize: '20px' }}>{item.emoji}</span>
-                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: item.color }}>
-                      {isKz ? item.titleKz : item.titleRu}
-                    </h4>
-                  </div>
-                  <ul style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {(isKz ? item.pointsKz : item.pointsRu).map((p, pi) => (
-                      <li key={pi} style={{ fontSize: '12px', color: 'rgba(255,255,255,0.50)', lineHeight: 1.5 }}>
-                        {p}
-                      </li>
-                    ))}
-                  </ul>
+                { n: 5, ru: 'вещей которые ты ВИДИШЬ', kz: 'КӨРЕТІН нәрсені атаңыз' },
+                { n: 4, ru: 'вещи которые ты ЧУВСТВУЕШЬ', kz: 'СЕЗІНЕТІН нәрсені атаңыз' },
+                { n: 3, ru: 'вещи которые ты СЛЫШИШЬ', kz: 'ЕСТИТІН нәрсені атаңыз' },
+                { n: 2, ru: 'вещи которые ты НЮХАЕШЬ', kz: 'ИІСКЕЙТІН нәрсені атаңыз' },
+                { n: 1, ru: 'вещь которую ты ЧУВСТВУЕШЬ НА ВКУС', kz: 'ТАТИТЫН нәрсені атаңыз' },
+              ].map(step => (
+                <div key={step.n} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(255,200,60,0.12)', border: '1px solid rgba(255,200,60,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 800, color: '#ffd060', flexShrink: 0 }}>{step.n}</div>
+                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.60)' }}>{isKz ? step.kz : step.ru}</span>
                 </div>
               ))}
             </div>
-          )}
-
-          {/* ══ ТАБ: SOS ══ */}
-          {activeTab === 'sos' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{
-                padding: '16px',
-                borderRadius: '18px',
-                background: 'rgba(248,113,113,0.10)',
-                border: '1px solid rgba(248,113,113,0.30)',
-                textAlign: 'center',
-              }}>
-                <div style={{ fontSize: '24px', marginBottom: '8px' }}>🆘</div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#f87171', marginBottom: '4px' }}>
-                  {isKz ? 'Сен жалғыз емессің' : 'Ты не один'}
-                </div>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.50)' }}>
-                  {isKz ? 'Көмек сұрау — бұл күш' : 'Просить о помощи — это сила'}
-                </div>
-              </div>
-
-              {SOS_CONTACTS.map((c, i) => (
-                <a
-                  key={i}
-                  href={`tel:${c.phone.replace(/[^0-9+]/g, '')}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '14px',
-                    padding: '16px',
-                    borderRadius: '18px',
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <div style={{
-                    width: '40px', height: '40px',
-                    borderRadius: '12px',
-                    background: `${c.color}20`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '18px',
-                    color: c.color,
-                  }}>
-                    📞
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>
-                      {isKz ? c.nameKz : c.nameRu}
-                    </div>
-                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
-                      {isKz ? c.descKz : c.descRu}
-                    </div>
-                  </div>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: c.color }}>
-                    {c.phone}
-                  </div>
-                </a>
-              ))}
-            </div>
-          )}
-
-        </div>
+          </div>
+        )}
       </div>
     </SectionShell>
   )

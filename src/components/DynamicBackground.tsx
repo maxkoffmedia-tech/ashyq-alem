@@ -1,40 +1,26 @@
 'use client'
 import { useEffect, useState } from 'react'
-
 export default function DynamicBackground() {
-  // По умолчанию ставим главный фон
-  const [bg, setBg] = useState('/world_main.png')
-
+  const [bg, setBg] = useState('/images/backgrounds/world_main.png')
   useEffect(() => {
-    const updateBackground = () => {
-      const hour = new Date().getHours()
-      
-      // Логика смены твоих .png файлов по времени суток
-      if (hour >= 5 && hour < 17) {
-        setBg('/world_main.png')   // День (светлый с лучами)
-      } else if (hour >= 17 && hour < 21) {
-        setBg('/world_main1.png')  // Вечер (туманный с грибами)
-      } else {
-        setBg('/world_main2.png')  // Ночь (синий лунный)
-      }
+    const update = () => {
+      const h = new Date().getHours()
+      if (h >= 5 && h < 17) setBg('/images/backgrounds/world_main.png')
+      else if (h >= 17 && h < 21) setBg('/images/backgrounds/world_main1.png')
+      else setBg('/images/backgrounds/world_main2.png')
     }
-
-    updateBackground()
-    // Проверяем время каждую минуту, чтобы фон сменился плавно
-    const timer = setInterval(updateBackground, 60000)
-    return () => clearInterval(timer)
+    update()
+    const t = setInterval(update, 60000)
+    return () => clearInterval(t)
   }, [])
-
   return (
-    <div className="fixed inset-0 z-[-20] w-full h-full bg-black overflow-hidden">
-      <img 
-        key={bg}
-        src={bg} 
-        className="w-full h-full object-cover object-center transition-opacity duration-1000 ease-in-out"
-        alt="Ұлы Дала Жолы Background"
+    <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: '#000' }}>
+      <img
+        src={bg}
+        alt=""
+        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
       />
-      {/* Слой затемнения для читаемости интерфейса */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 40%, rgba(0,0,0,0.5) 100%)' }} />
     </div>
   )
 }

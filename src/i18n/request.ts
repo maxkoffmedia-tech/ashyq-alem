@@ -1,13 +1,16 @@
-// src/i18n/request.ts — НОВАЯ РАБОЧАЯ ВЕРСИЯ БЕЗ notFound()
 import { getRequestConfig } from 'next-intl/server';
+import { routing } from './routing';
 
-export default getRequestConfig(async () => {
-  // Больше НЕ используем параметр {locale} и НЕ делаем notFound()
-  // Просто всегда возвращаем русский по умолчанию
-  // (потом добавим переключение, но сейчас — главное, чтобы сайт жил)
+export default getRequestConfig(async ({ requestLocale }) => {
+  let locale = await requestLocale;
+
+  if (!locale || !routing.locales.includes(locale as 'ru' | 'kz')) {
+    locale = routing.defaultLocale;
+  }
 
   return {
-    messages: (await import('../messages/ru.json')).default,
+    locale,
+    messages: (await import(`../messages/${locale}.json`)).default,
     timeZone: 'Asia/Almaty',
   };
 });
