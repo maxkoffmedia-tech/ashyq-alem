@@ -335,7 +335,7 @@ const PURCHASES = [
 {tab === 'economy' && (
   <>
     {(() => {
-      const addictionKey = user.type || 'other'
+      const addictionKey = user.addictionType || 'other'
       const costData = ADDICTION_COSTS[addictionKey] || ADDICTION_COSTS.other
       const dailyCost = costData.daily
       const totalSaved = days * dailyCost
