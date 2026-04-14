@@ -11,7 +11,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <WorldLayer />
 
       {/* Хедер — LanguageSwitcher и Music справа */}
-      <header style={{ position: 'fixed', top: 0, right: 0, height: '52px', zIndex: 49, display: 'flex', alignItems: 'center', gap: '10px', padding: '0 16px' }}>
+      <header style={{ position: 'fixed', top: 0, right: 0, height: '52px', zIndex: 48, display: 'flex', alignItems: 'center', gap: '10px', padding: '0 16px' }}>
         <LanguageSwitcher />
         <MusicToggle />
       </header>
