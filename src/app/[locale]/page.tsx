@@ -40,7 +40,7 @@ export default function LocalePage({ params }: { params: { locale: string } }) {
   if (!mounted) return null
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', padding: '4px 16px 20px', boxSizing: 'border-box' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', padding: '4px 16px 4px', boxSizing: 'border-box' }}>
 
       {/* Хедер — RUS/КАЗ + Music внутри страницы */}
       {!activeSection && (
@@ -82,7 +82,7 @@ export default function LocalePage({ params }: { params: { locale: string } }) {
         <TrialSection user={user} locale={currentLocale} onBack={() => setActiveSection(null)} />
       )}
 
-      <div style={{ textAlign: 'center', flexShrink: 0, marginTop: '52px' }}>
+      <div style={{ textAlign: 'center', flexShrink: 0, marginTop: '4px' }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.4em', color: 'rgba(255,200,60,0.55)', textTransform: 'uppercase', marginBottom: '4px' }}>
           {currentLocale === 'kz' ? '\u2756 \u04b0\u043b\u044b \u0414\u0430\u043b\u0430 \u2756' : '\u2756 \u0412\u0435\u043b\u0438\u043a\u0430\u044f \u0421\u0442\u0435\u043f\u044c \u2756'}
         </div>
@@ -102,7 +102,7 @@ export default function LocalePage({ params }: { params: { locale: string } }) {
         </div>
       </div>
 
-      <div style={{ flexShrink: 0 }}>
+      <div style={{ flexShrink: 0, marginTop: '-8px' }}>
         {user ? <DayCounter locale={currentLocale} /> : (
           <button onClick={() => setActiveSection('auth')}
             style={{ padding: '11px 30px', borderRadius: '26px', border: '1px solid rgba(255,200,60,0.35)', background: 'rgba(255,180,30,0.10)', backdropFilter: 'blur(12px)', color: 'rgba(255,220,100,1)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'inherit' }}>
