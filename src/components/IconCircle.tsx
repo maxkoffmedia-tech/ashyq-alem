@@ -9,8 +9,8 @@ interface IconCircleProps {
 
 export default function IconCircle({ locale, onSectionClick }: IconCircleProps) {
   const t = translations[locale as keyof typeof translations] || translations.ru
-  const RADIUS = 120
-  const SIZE = 290
+  const RADIUS = 105
+  const SIZE = 260
 
   const icons = [
     { id: 'path',      label: t.icons?.path   || 'Путь',      src: '/images/icons/path.png',    angle: -90  },
@@ -43,7 +43,7 @@ export default function IconCircle({ locale, onSectionClick }: IconCircleProps) 
           <button key={item.id} className="icn" onClick={() => onSectionClick(item.id)}
             style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, zIndex: 20 }}
           >
-            <div className="icn-c" style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(8,8,8,0.85)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255,255,255,0.14)', overflow: 'hidden', position: 'relative', boxShadow: '0 0 20px rgba(0,0,0,0.6)' }}>
+            <div className="icn-c" style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(8,8,8,0.85)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255,255,255,0.14)', overflow: 'hidden', position: 'relative', boxShadow: '0 0 20px rgba(0,0,0,0.6)' }}>
               <Image src={item.src} alt={item.label} fill style={{ objectFit: 'cover' }} sizes="72px" />
             </div>
             <span className="icn-l" style={{ fontSize: '9px', color: 'rgba(255,255,255,0.45)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', textShadow: '0 1px 6px rgba(0,0,0,0.9)', whiteSpace: 'nowrap', transition: 'color 0.3s' }}>
