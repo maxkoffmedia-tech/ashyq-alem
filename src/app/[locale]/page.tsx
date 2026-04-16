@@ -85,7 +85,7 @@ export default function LocalePage({ params }: { params: { locale: string } }) {
       )}
 
       {/* ВЕРХНИЙ БЛОК — заголовок */}
-      <div style={{ textAlign: 'center', flexShrink: 0, paddingTop: '44px', paddingLeft: '16px', paddingRight: '16px' }}>
+      <div style={{ textAlign: 'center', flexShrink: 0, paddingTop: '36px', paddingLeft: '16px', paddingRight: '16px' }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.4em', color: 'rgba(255,200,60,0.55)', textTransform: 'uppercase', marginBottom: '2px' }}>
           {currentLocale === 'kz' ? '\u2756 \u04b0\u043b\u044b \u0414\u0430\u043b\u0430 \u2756' : '\u2756 \u0412\u0435\u043b\u0438\u043a\u0430\u044f \u0421\u0442\u0435\u043f\u044c \u2756'}
         </div>
@@ -108,7 +108,7 @@ export default function LocalePage({ params }: { params: { locale: string } }) {
       </div>
 
       {/* СЧЁТЧИК ДНЕЙ */}
-      <div style={{ flexShrink: 0, marginTop: '8px' }}>
+      <div style={{ flexShrink: 0, marginTop: '4px' }}>
         {user ? (
           <DayCounter locale={currentLocale} />
         ) : (
@@ -120,7 +120,7 @@ export default function LocalePage({ params }: { params: { locale: string } }) {
       </div>
 
       {/* ИКОНКИ — занимают оставшееся место */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', minHeight: 0 }}>
+      style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', width: '100%', minHeight: 0, paddingTop: '4px' }}
         <IconCircle locale={currentLocale} onSectionClick={setActiveSection} />
       </div>
 
