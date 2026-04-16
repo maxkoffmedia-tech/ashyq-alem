@@ -14,16 +14,22 @@ import AksakalSection from '@/components/AksakalSection'
 import AoulSection from '@/components/AoulSection'
 import TrialSection from '@/components/TrialSection'
 import MusicToggle from '@/components/MusicToggle'
+import OnboardingScreen from '@/components/OnboardingScreen'
 
 export default function LocalePage({ params }: { params: { locale: string } }) {
   const { user, register, resetPath } = useAuth()
   const currentLocale = params.locale as 'ru' | 'kz'
   const [activeSection, setActiveSection] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    setMounted(true)
+    const done = localStorage.getItem('ashyq_onboarded_v2')
+    if (!done) setShowOnboarding(true)
+  }, [])
 
   const t = translations[currentLocale] || translations.ru
   const randomQuote = useMemo(() => {
@@ -40,10 +46,14 @@ export default function LocalePage({ params }: { params: { locale: string } }) {
 
   if (!mounted) return null
 
+  if (showOnboarding) {
+    return <OnboardingScreen locale={currentLocale} onComplete={() => setShowOnboarding(false)} />
+  }
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box', overflow: 'hidden' }}>
 
-      {/* RUS/КАЗ + Music — поверх всего */}
+      {/* RUS/КАЗ + Music */}
       {!activeSection && (
         <div style={{ position: 'absolute', top: '8px', right: '12px', zIndex: 50, display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.40)', backdropFilter: 'blur(8px)', borderRadius: '20px', padding: '4px 6px', border: '1px solid rgba(255,255,255,0.12)' }}>
@@ -84,7 +94,7 @@ export default function LocalePage({ params }: { params: { locale: string } }) {
         <TrialSection user={user} locale={currentLocale} onBack={() => setActiveSection(null)} />
       )}
 
-      {/* ВЕРХНИЙ БЛОК — заголовок */}
+      {/* ЗАГОЛОВОК */}
       <div style={{ textAlign: 'center', flexShrink: 0, paddingTop: '36px', paddingLeft: '16px', paddingRight: '16px' }}>
         <div style={{ fontSize: '9px', letterSpacing: '0.4em', color: 'rgba(255,200,60,0.55)', textTransform: 'uppercase', marginBottom: '2px' }}>
           {currentLocale === 'kz' ? '\u2756 \u04b0\u043b\u044b \u0414\u0430\u043b\u0430 \u2756' : '\u2756 \u0412\u0435\u043b\u0438\u043a\u0430\u044f \u0421\u0442\u0435\u043f\u044c \u2756'}
@@ -95,8 +105,6 @@ export default function LocalePage({ params }: { params: { locale: string } }) {
         <p style={{ margin: '0 0 6px', fontSize: 'clamp(0.6rem, 1.5vw, 0.72rem)', color: 'rgba(255,235,180,0.45)', letterSpacing: '0.06em' }}>
           {currentLocale === 'kz' ? '\u0422\u04d9\u0443\u0435\u043b\u0434\u0456\u043b\u0456\u043a\u0442\u0435\u043d \u0430\u0437\u0430\u0442\u0442\u044b\u049b \u0436\u043e\u043b\u044b' : '\u041f\u0443\u0442\u044c \u043e\u0441\u0432\u043e\u0431\u043e\u0436\u0434\u0435\u043d\u0438\u044f \u043e\u0442 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438'}
         </p>
-
-        {/* Цитата */}
         <div style={{ display: 'inline-block', padding: '5px 14px', background: 'rgba(0,0,0,0.28)', backdropFilter: 'blur(8px)', borderRadius: '18px', border: '1px solid rgba(255,200,60,0.12)', maxWidth: '320px' }}>
           <p style={{ margin: 0, fontStyle: 'italic', fontSize: 'clamp(0.70rem, 1.8vw, 0.86rem)', color: 'rgba(255,228,140,0.80)', lineHeight: 1.4 }}>
             {'\u00ab'}{randomQuote}{'\u00bb'}
@@ -119,13 +127,13 @@ export default function LocalePage({ params }: { params: { locale: string } }) {
         )}
       </div>
 
-      {/* ИКОНКИ — занимают оставшееся место */}
-      style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', width: '100%', minHeight: 0, paddingTop: '4px' }}
+      {/* ИКОНКИ */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', width: '100%', minHeight: 0, paddingTop: '4px' }}>
         <IconCircle locale={currentLocale} onSectionClick={setActiveSection} />
       </div>
 
       {/* ФУТЕР */}
-      <div style={{ flexShrink: 0, textAlign: 'center', padding: '4px 16px 6px' }}>
+      <div style={{ flexShrink: 0, textAlign: 'center', padding: '2px 16px 6px' }}>
         <p style={{ margin: 0, fontSize: '9px', color: 'rgba(255,255,255,0.18)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
           {'\u04b0\u043b\u044b \u0414\u0430\u043b\u0430 \u0416\u043e\u043b\u044b \u00a9 2026 \u00b7 \u041d\u0435 \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f \u043c\u0435\u0434\u0438\u0446\u0438\u043d\u0441\u043a\u043e\u0439 \u0443\u0441\u043b\u0443\u0433\u043e\u0439'}
         </p>
