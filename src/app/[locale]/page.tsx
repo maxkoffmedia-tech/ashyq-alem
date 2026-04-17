@@ -25,11 +25,13 @@ export default function LocalePage({ params }: { params: { locale: string } }) {
   const router = useRouter()
   const pathname = usePathname()
 
+  useEffect(() => { setMounted(true) }, [])
+
   useEffect(() => {
-    setMounted(true)
-    const done = localStorage.getItem('ashyq_onboarded_v2')
-    if (!done) setShowOnboarding(true)
-  }, [])
+  if (!mounted) return
+  const done = localStorage.getItem('ashyq_onboarded_v2')
+  if (!done) setShowOnboarding(true)
+  }, [mounted])
 
   const t = translations[currentLocale] || translations.ru
   const randomQuote = useMemo(() => {
